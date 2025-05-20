@@ -19,13 +19,48 @@ public class Payroll {
 
     private float amount;
     private String status;
+    private Long employeeId;
 
-    // @ManyToOne
-    // @JoinColumn(name = "id_employee")
-    // private Employee employee;
+    /**
+     * Default constructor.
+     */
+    public Payroll() {
+    }
 
-    // @OneToMany(mappedBy = "payroll", cascade = CascadeType.ALL)
-    // private List<PayrollAdjustments> adjustments;
+    /**
+     * Constructor with all fields.
+     *
+     * @param id          the ID
+     * @param paymentDate the payment date
+     * @param amount      the amount
+     * @param status      the status
+     * @param employeeId  the employee ID
+     */
+    public Payroll(Long id, Date paymentDate, float amount, String status, Long employeeId) {
+        this.id = id;
+        this.paymentDate = paymentDate;
+        this.amount = amount;
+        this.status = status;
+        this.employeeId = employeeId;
+    }
+
+    /**
+     * Gets the employee ID.
+     *
+     * @return the employee ID
+     */
+    public Long getEmployeeId() {
+        return employeeId;
+    }
+
+    /**
+     * Sets the employee ID.
+     *
+     * @param employeeId the employee ID to set
+     */
+    public void setEmployeeId(Long employeeId) {
+        this.employeeId = employeeId;
+    }
 
     /**
      * Gets the ID.
@@ -91,35 +126,4 @@ public class Payroll {
         this.status = status;
     }
 
-    /**
-     * Gets the employee.
-     * @return the employee
-     */
-    // public Employee getEmployee() {
-    //     return employee;
-    // }
-
-    /**
-     * Sets the employee.
-     * @param employee the employee to set
-     */
-    // public void setEmployee(Employee employee) {
-    //     this.employee = employee;
-    // }
-
-    /**
-     * Gets the payroll adjustments.
-     * @return the payroll adjustments
-     */
-    // public List<PayrollAdjustments> getAdjustments() {
-    //     return adjustments;
-    // }
-
-    /**
-     * Sets the payroll adjustments.
-     * @param adjustments the payroll adjustments to set
-     */
-    // public void setAdjustments(List<PayrollAdjustments> adjustments) {
-    //     this.adjustments = adjustments;
-    // }
 }
