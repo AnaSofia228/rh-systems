@@ -1,10 +1,10 @@
 package com.rh_systems.employee_service.Entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+// import lombok.Data;
+// import lombok.NoArgsConstructor;
 
-import java.util.List;
+// import java.util.List;
 
 /**
  * Entity class representing an Employee in the system

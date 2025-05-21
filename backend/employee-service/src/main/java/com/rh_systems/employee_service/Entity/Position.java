@@ -1,8 +1,8 @@
 package com.rh_systems.employee_service.Entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+// import lombok.Data;
+// import lombok.NoArgsConstructor;
 
 /**
  * Entity class representing a Position in the system
