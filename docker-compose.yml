@@ -165,7 +165,7 @@ services:
       POSTGRES_USER: performance_user
       POSTGRES_PASSWORD: performance_pass
     volumes:
-      - ./PostgreSQL/performance/data:/var/lib/postgresql/data
+      - ./PostgreSQL/performance_s/data:/var/lib/postgresql/data
     ports:
       - "5434:5432"
     networks:
