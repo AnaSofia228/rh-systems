@@ -65,6 +65,17 @@ public class PayrollController {
     }
 
     /**
+     * Creates a new payroll record with employee data validation.
+     * @param payrollDTO the payroll data
+     * @return a ResponseEntity with the created PayrollDTOGetPostPut, or 400 if validation fails
+     */
+    @PostMapping
+    public ResponseEntity<PayrollDTOGetPostPut> createPayrollWithEmployeeValidation(@Valid @RequestBody PayrollDTO payrollDTO) {
+        Optional<PayrollDTOGetPostPut> savedPayroll = payrollService.createPayrollWithEmployeeValidation(payrollDTO);
+        return savedPayroll.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.badRequest().build());
+    }
+
+    /**
      * Updates an existing payroll record.
      * @param id the payroll ID
      * @param payrollDTO the payroll data to update

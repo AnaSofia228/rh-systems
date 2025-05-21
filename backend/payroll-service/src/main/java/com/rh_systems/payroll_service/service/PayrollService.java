@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.rh_systems.payroll_service.client.EmployeeClient;
+import com.rh_systems.payroll_service.dto.EmployeeDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,42 @@ import com.rh_systems.payroll_service.repository.PayrollRepository;
 public class PayrollService {
     @Autowired
     private PayrollRepository payrollRepository;
+
+    @Autowired
+    private EmployeeClient employeeClient;
+
+    /**
+     * Creates a new payroll record with employee data validation.
+     *
+     * @param payrollDTO the payroll data
+     * @return an Optional containing the created PayrollDTOGetPostPut, or empty if validation fails
+     * */
+    public Optional<PayrollDTOGetPostPut> createPayrollWithEmployeeValidation(PayrollDTO payrollDTO) {
+        EmployeeDTO employee;
+        try{
+            employee = employeeClient.getEmployeeById(payrollDTO.getEmployeeId());
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting employee data" + e.getMessage());
+        }
+        if (employee == null) {
+            return Optional.empty();
+        }
+        if (payrollRepository.findByPayrollStatus(payrollDTO.getStatus()).isPresent()) {
+            return Optional.empty();
+        }
+        Payroll payroll = new Payroll();
+        payroll.setStatus(payrollDTO.getStatus());
+        payroll.setPaymentDate(payrollDTO.getPaymentDate());
+        payroll.setAmount(payrollDTO.getAmount());
+        payroll.setEmployeeId(employee.getId());
+
+        Payroll savePayroll = payrollRepository.save(payroll);
+
+        PayrollDTOGetPostPut payrollDTOGetPostPut = new PayrollDTOGetPostPut();
+        payrollDTOGetPostPut.convertToPayrollDTO(savePayroll);
+        return Optional.of(payrollDTOGetPostPut);
+
+    }
 
     /**
      * Gets all payroll records.
