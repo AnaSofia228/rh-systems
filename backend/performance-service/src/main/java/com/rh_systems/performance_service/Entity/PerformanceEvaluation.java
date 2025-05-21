@@ -17,10 +17,30 @@ public class PerformanceEvaluation {
     private Date date;
     private float score;
     private String comments;
+    private Long employeeId;
 
-    // @ManyToOne
-    // @JoinColumn(name = "id_employee")
-    // private Employee employee;
+    /**
+     * Default constructor.
+     */
+    public PerformanceEvaluation() {
+    }
+
+    /**
+     * Constructor with all fields.
+     *
+     * @param id         the ID
+     * @param date       the date
+     * @param score      the score
+     * @param comments   the comments
+     * @param employeeId the employee ID
+     */
+    public PerformanceEvaluation(Long id, Date date, float score, String comments, Long employeeId) {
+        this.id = id;
+        this.date = date;
+        this.score = score;
+        this.comments = comments;
+        this.employeeId = employeeId;
+    }
 
     /**
      * Gets the ID.
@@ -87,18 +107,20 @@ public class PerformanceEvaluation {
     }
 
     /**
-     * Gets the employee.
-     * @return the employee
+     * Gets the employee ID.
+     *
+     * @return the employee ID
      */
-    // public Employee getEmployee() {
-    //     return employee;
-    // }
+    public Long getEmployeeId() {
+        return employeeId;
+    }
 
     /**
-     * Sets the employee.
-     * @param employee the employee to set
+     * Sets the employee ID.
+     *
+     * @param employeeId the employee ID to set
      */
-    // public void setEmployee(Employee employee) {
-    //     this.employee = employee;
-    // }
+    public void setEmployeeId(Long employeeId) {
+        this.employeeId = employeeId;
+    }
 }
