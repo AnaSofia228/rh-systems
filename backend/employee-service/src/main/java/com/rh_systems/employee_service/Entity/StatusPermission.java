@@ -2,7 +2,7 @@ package com.rh_systems.employee_service.Entity;
 
 import jakarta.persistence.*;
 
-import java.util.List;
+// import java.util.List;
 
 /**
  * Entity class representing a Status Permission in the system
