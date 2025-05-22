@@ -42,8 +42,4 @@ jobs:
             git reset --hard origin/main
             git pull origin main
             
-            # Desplegar con Docker
-            cd ${PROJECT_PATH}
-            docker-compose down || true
-            docker-compose up --build -d
           EOF
