@@ -104,20 +104,6 @@ services:
     networks:
       - app-network-cra
 
-  service-discovery:
-    build:
-      context: ./backend/service-discovery
-      dockerfile: Dockerfile
-    container_name: service-discovery
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - EUREKA_INSTANCE_HOSTNAME=service-discovery
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
-    ports:
-      - "8761:8761"
-    networks:
-      - app-network-cra
-
     # ------------------------- BASES DE DATOS -------------------------
   employee-db:
     image: postgres:15
