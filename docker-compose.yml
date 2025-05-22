@@ -34,7 +34,6 @@ services:
       - schedule-db
     networks:
       - app-network-cra
-
     # ------------------------- MICROSERVICIOS -------------------------
   employee-service:
     build:
@@ -103,8 +102,7 @@ services:
         condition: service_healthy
     networks:
       - app-network-cra
-
-    # ------------------------- BASES DE DATOS -------------------------
+    # ------------------------- BASES DE DATOS --------------------------
   employee-db:
     image: postgres:15
     container_name: employee-db
