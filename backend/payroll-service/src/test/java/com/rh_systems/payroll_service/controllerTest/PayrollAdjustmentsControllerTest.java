@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.rh_systems.payroll_service.Controller.PayrollAdjustmentsController;
+import com.rh_systems.payroll_service.Entity.PayrollAdjustments.AdjustmentType;
 import com.rh_systems.payroll_service.dto.PayrollAdjustmentsDTO;
 import com.rh_systems.payroll_service.dto.PayrollAdjustmentsDTOGetPostPut;
 import com.rh_systems.payroll_service.service.PayrollAdjustmentsService;
@@ -103,7 +104,8 @@ public class PayrollAdjustmentsControllerTest {
     @Test
     void testGetPayrollAdjustmentByType_Success() throws Exception {
         // Arrange
-        String type = "BONUS";
+        String typeStr = "BONUS";
+        AdjustmentType type = AdjustmentType.BONUS;
         PayrollAdjustmentsDTOGetPostPut adjustment = new PayrollAdjustmentsDTOGetPostPut();
         adjustment.setId(1L);
         adjustment.setType(type);
@@ -114,7 +116,7 @@ public class PayrollAdjustmentsControllerTest {
         when(payrollAdjustmentsService.getPayrollAdjustmentsByType(type)).thenReturn(Optional.of(adjustment));
 
         // Act & Assert
-        mockMvc.perform(get("/api/payrolls/adjustments/type/{type}", type))
+        mockMvc.perform(get("/api/payrolls/adjustments/type/{type}", typeStr))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
@@ -122,11 +124,12 @@ public class PayrollAdjustmentsControllerTest {
     @Test
     void testGetPayrollAdjustmentByType_NotFound() throws Exception {
         // Arrange
-        String type = "BONUS";
+        String typeStr = "BONUS";
+        AdjustmentType type = AdjustmentType.BONUS;
         when(payrollAdjustmentsService.getPayrollAdjustmentsByType(type)).thenReturn(Optional.empty());
 
         // Act & Assert
-        mockMvc.perform(get("/api/payrolls/adjustments/type/{type}", type))
+        mockMvc.perform(get("/api/payrolls/adjustments/type/{type}", typeStr))
                 .andExpect(status().isNotFound());
     }
 

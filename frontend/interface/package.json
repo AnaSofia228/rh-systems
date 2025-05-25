@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "jwt-decode": "^4.0.0",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
     "@radix-ui/react-accordion": "^1.2.0",

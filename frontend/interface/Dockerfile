@@ -10,8 +10,7 @@ RUN npm install
 # Copiar el resto de archivos
 COPY . .
 
-# Instalar jwt-decode explícitamente
-RUN npm install jwt-decode
+# Dependencies are now managed in package.json
 
 # Construir la aplicación
 RUN npm run build

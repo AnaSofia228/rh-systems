@@ -45,7 +45,7 @@ api.interceptors.response.use(
           });
           localStorage.removeItem("token");
           localStorage.removeItem("user");
-          window.location.href = "/login";
+          window.location.href = "/";
           break;
         case 403:
           toast.error("Acceso denegado", {
@@ -102,7 +102,6 @@ interface Employee {
   email: string;
   phone: string;
   password: string;
-  company: string;
   positionId: number;
 }
 
@@ -199,6 +198,27 @@ export const performanceApi = {
   delete: (id: number) => api.delete(`${BASE_URLS.PERFORMANCE}/evaluations/${id}`),
   getByEmployee: (employeeId: number) =>
       api.get<Evaluation[]>(`${BASE_URLS.PERFORMANCE}/evaluations/employee/${employeeId}`),
+};
+
+// Alias for performanceApi to maintain compatibility with components using evaluationApi
+export const evaluationApi = performanceApi;
+
+// Role API
+interface Role {
+  id?: number;
+  name: string;
+  description: string;
+  salary: number;
+  employeeCount?: number;
+}
+
+export const roleApi = {
+  getAll: () => api.get<Role[]>(`${BASE_URLS.EMPLOYEE}/api/role`),
+  getById: (id: number) => api.get<Role>(`${BASE_URLS.EMPLOYEE}/api/role/${id}`),
+  create: (role: Omit<Role, 'id'>) => api.post<Role>(`${BASE_URLS.EMPLOYEE}/api/role`, role),
+  update: (id: number, role: Partial<Omit<Role, 'id'>>) =>
+      api.put<Role>(`${BASE_URLS.EMPLOYEE}/api/role/${id}`, role),
+  delete: (id: number) => api.delete(`${BASE_URLS.EMPLOYEE}/api/role/${id}`),
 };
 
 // Schedule API

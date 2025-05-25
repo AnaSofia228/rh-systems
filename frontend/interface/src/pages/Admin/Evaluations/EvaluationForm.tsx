@@ -18,7 +18,7 @@ import { evaluationApi, employeeApi } from "@/utils/api";
 
 // Schema for form validation
 const evaluationSchema = z.object({
-  id_employee: z.string().min(1, "Seleccione un empleado"),
+  employeeId: z.string().min(1, "Seleccione un empleado"),
   date: z.string().refine(val => val.length > 0, {
     message: "La fecha es requerida",
   }),
@@ -37,7 +37,7 @@ const EvaluationForm = () => {
   const form = useForm<EvaluationFormValues>({
     resolver: zodResolver(evaluationSchema),
     defaultValues: {
-      id_employee: "",
+      employeeId: "",
       date: new Date().toISOString().split('T')[0], // Today's date as default
       score: 3,
       comments: "",
@@ -60,15 +60,15 @@ const EvaluationForm = () => {
       if (!isEditMode) return null;
       const response = await evaluationApi.getById(Number(id));
       const evaluation = response.data;
-      
+
       // Populate the form
       form.reset({
-        id_employee: String(evaluation.id_employee),
+        employeeId: String(evaluation.employeeId),
         date: new Date(evaluation.date).toISOString().split('T')[0],
         score: evaluation.score,
         comments: evaluation.comments,
       });
-      
+
       return evaluation;
     },
     enabled: isEditMode,
@@ -78,9 +78,9 @@ const EvaluationForm = () => {
     try {
       const evaluationData = {
         ...data,
-        id_employee: Number(data.id_employee),
+        employeeId: Number(data.employeeId),
       };
-      
+
       if (isEditMode) {
         await evaluationApi.update(Number(id), evaluationData);
         toast.success("Evaluación actualizada con éxito");
@@ -122,7 +122,7 @@ const EvaluationForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="id_employee"
+                  name="employeeId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Empleado</FormLabel>
@@ -149,7 +149,7 @@ const EvaluationForm = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="date"
@@ -164,7 +164,7 @@ const EvaluationForm = () => {
                   )}
                 />
               </div>
-              
+
               <FormField
                 control={form.control}
                 name="score"
@@ -193,7 +193,7 @@ const EvaluationForm = () => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="comments"
@@ -211,7 +211,7 @@ const EvaluationForm = () => {
                   </FormItem>
                 )}
               />
-              
+
               <div className="flex justify-end space-x-4">
                 <Button
                   type="button"

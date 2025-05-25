@@ -37,6 +37,14 @@ public class PayrollAdjustmentsDTO {
     }
 
     /**
+     * Sets the type using a string.
+     * @param typeStr the type string to set
+     */
+    public void setType(String typeStr) {
+        this.type = AdjustmentType.valueOf(typeStr);
+    }
+
+    /**
      * Gets the description.
      * @return the description
      */

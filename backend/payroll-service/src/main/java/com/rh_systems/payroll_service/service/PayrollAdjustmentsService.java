@@ -69,6 +69,20 @@ public class PayrollAdjustmentsService {
     }
 
     /**
+     * Gets a payroll adjustment by its type string.
+     * @param typeStr the payroll adjustment type as a string
+     * @return an Optional containing the PayrollAdjustmentsDTOGetPostPut if found, or empty otherwise
+     */
+    public Optional<PayrollAdjustmentsDTOGetPostPut> getPayrollAdjustmentsByType(String typeStr) {
+        try {
+            AdjustmentType type = AdjustmentType.valueOf(typeStr);
+            return getPayrollAdjustmentsByType(type);
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
      * Creates a new payroll adjustment.
      * @param payrollAdjustmentDTO the payroll adjustment data
      * @return an Optional containing the created PayrollAdjustmentsDTOGetPostPut, or empty if a payroll adjustment with the same type exists

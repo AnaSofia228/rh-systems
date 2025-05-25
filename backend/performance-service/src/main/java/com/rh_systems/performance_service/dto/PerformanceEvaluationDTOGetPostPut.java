@@ -1,5 +1,6 @@
 package com.rh_systems.performance_service.dto;
 
+import java.time.ZoneId;
 import java.util.Date;
 
 import com.rh_systems.performance_service.Entity.PerformanceEvaluation;
@@ -100,9 +101,12 @@ public class PerformanceEvaluationDTOGetPostPut {
      */
     public void convertToPerformanceEvaluationDTO(PerformanceEvaluation performanceEvaluationEntity) {
         this.setId(performanceEvaluationEntity.getId());
-        this.setDate(performanceEvaluationEntity.getDate());
+        // Convert LocalDate to Date
+        if (performanceEvaluationEntity.getEvaluationDate() != null) {
+            this.setDate(Date.from(performanceEvaluationEntity.getEvaluationDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        }
         this.setScore(performanceEvaluationEntity.getScore());
         this.setComments(performanceEvaluationEntity.getComments());
-        // this.setEmployeeId(performanceEvaluationEntity.getEmployee().getId());
+        this.setEmployeeId(performanceEvaluationEntity.getEmployeeId());
     }
 }

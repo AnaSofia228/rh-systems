@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.rh_systems.payroll_service.Entity.Payroll;
 import com.rh_systems.payroll_service.Entity.PayrollAdjustments;
+import com.rh_systems.payroll_service.Entity.PayrollAdjustments.AdjustmentType;
 import com.rh_systems.payroll_service.dto.PayrollAdjustmentsDTO;
 import com.rh_systems.payroll_service.dto.PayrollAdjustmentsDTOGetPostPut;
 import com.rh_systems.payroll_service.repository.PayrollAdjustmentsRepository;
@@ -45,7 +46,7 @@ public class PayrollAdjustmentsServiceTest {
         payroll = new Payroll();
         payroll.setId(1L);
         payroll.setStatus("PENDING");
-        
+
         adjustmentDTO = new PayrollAdjustmentsDTO();
         adjustmentDTO.setType("BONUS");
         adjustmentDTO.setDescription("Annual bonus");
@@ -54,7 +55,7 @@ public class PayrollAdjustmentsServiceTest {
 
         adjustment = new PayrollAdjustments();
         adjustment.setId(1L);
-        adjustment.setType("BONUS");
+        adjustment.setType(AdjustmentType.BONUS);
         adjustment.setDescription("Annual bonus");
         adjustment.setAmount(500.0f);
         adjustment.setPayroll(payroll);
@@ -197,12 +198,12 @@ public class PayrollAdjustmentsServiceTest {
         // Arrange
         PayrollAdjustments existingAdjustment = new PayrollAdjustments();
         existingAdjustment.setId(1L);
-        existingAdjustment.setType("DEDUCTION");
-        
+        existingAdjustment.setType(AdjustmentType.DISCOUNT);
+
         PayrollAdjustments conflictAdjustment = new PayrollAdjustments();
         conflictAdjustment.setId(2L);
-        conflictAdjustment.setType("BONUS");
-        
+        conflictAdjustment.setType(AdjustmentType.BONUS);
+
         when(payrollAdjustmentsRepository.findById(anyLong())).thenReturn(Optional.of(existingAdjustment));
         when(payrollAdjustmentsRepository.findByPayrollAdjustmentsType(anyString())).thenReturn(Optional.of(conflictAdjustment));
 

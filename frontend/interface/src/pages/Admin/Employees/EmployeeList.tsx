@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,28 @@ import { DataTable } from "@/components/DataTable";
 import { toast } from "@/components/ui/sonner";
 import { employeeApi } from "@/utils/api";
 
+// Define the extended Employee interface with position
+interface EmployeeWithPosition {
+  id: number;
+  dni: string;
+  name: string;
+  lastname: string;
+  address: string;
+  email: string;
+  phone: string;
+  position?: {
+    id: number;
+    name: string;
+    description: string;
+    salary: number;
+  };
+}
+
 const EmployeeList = () => {
   const navigate = useNavigate();
-  
+
   // Query to fetch employees
-  const { data: employees = [], refetch } = useQuery({
+  const { data: employees = [], refetch } = useQuery<EmployeeWithPosition[]>({
     queryKey: ["employees"],
     queryFn: async () => {
       const response = await employeeApi.getAll();
@@ -34,13 +51,13 @@ const EmployeeList = () => {
       }
     }
   };
-  
+
   // Define table columns
   const columns = [
     {
       key: "name",
       header: "Nombre",
-      cell: (employee: any) => (
+      cell: (employee: EmployeeWithPosition) => (
         <div className="font-medium">
           {employee.name} {employee.lastname}
         </div>
@@ -50,27 +67,26 @@ const EmployeeList = () => {
     {
       key: "email",
       header: "Email",
-      cell: (employee: any) => employee.email,
+      cell: (employee: EmployeeWithPosition) => employee.email,
       sortable: true,
     },
     {
       key: "phone",
       header: "Teléfono",
-      cell: (employee: any) => employee.phone,
+      cell: (employee: EmployeeWithPosition) => employee.phone,
       sortable: false,
     },
     {
       key: "position",
       header: "Cargo",
-      cell: (employee: any) => (
-        employee.position?.name || "Sin asignar"
-      ),
+      cell: (employee: EmployeeWithPosition) => 
+        employee.position?.name || "Sin asignar",
       sortable: true,
     },
   ];
-  
+
   // Define table actions
-  const actions = (employee: any) => (
+  const actions = (employee: EmployeeWithPosition) => (
     <div className="flex space-x-2">
       <Button
         variant="ghost"
@@ -110,7 +126,7 @@ const EmployeeList = () => {
           </Button>
         </Link>
       </div>
-      
+
       <Card>
         <CardHeader className="pb-2">
           <CardTitle>Lista de empleados</CardTitle>

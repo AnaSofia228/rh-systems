@@ -1,13 +1,14 @@
 package com.rh_systems.payroll_service.dto;
 
 import com.rh_systems.payroll_service.Entity.PayrollAdjustments;
+import com.rh_systems.payroll_service.Entity.PayrollAdjustments.AdjustmentType;
 
 /**
  * Data Transfer Object for getting, posting, and putting payroll adjustments.
  */
 public class PayrollAdjustmentsDTOGetPostPut {
     private Long id;
-    private String type;
+    private AdjustmentType type;
     private String description;
     private float amount;
     private Long payrollId;
@@ -32,7 +33,7 @@ public class PayrollAdjustmentsDTOGetPostPut {
      * Gets the type.
      * @return the type
      */
-    public String getType() {
+    public AdjustmentType getType() {
         return type;
     }
 
@@ -40,8 +41,16 @@ public class PayrollAdjustmentsDTOGetPostPut {
      * Sets the type.
      * @param type the type to set
      */
-    public void setType(String type) {
+    public void setType(AdjustmentType type) {
         this.type = type;
+    }
+
+    /**
+     * Sets the type using a string.
+     * @param typeStr the type string to set
+     */
+    public void setType(String typeStr) {
+        this.type = AdjustmentType.valueOf(typeStr);
     }
 
     /**
@@ -98,7 +107,7 @@ public class PayrollAdjustmentsDTOGetPostPut {
      */
     public void convertToPayrollAdjustmentDTO(PayrollAdjustments payrollAdjustmentEntity) {
         this.setId(payrollAdjustmentEntity.getId());
-        this.setType(payrollAdjustmentEntity.getType().name());
+        this.setType(payrollAdjustmentEntity.getType());
         this.setDescription(payrollAdjustmentEntity.getDescription());
         this.setAmount(payrollAdjustmentEntity.getAmount());
         this.setPayrollId(payrollAdjustmentEntity.getPayroll().getId());

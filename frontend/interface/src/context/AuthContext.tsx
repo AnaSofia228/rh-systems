@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
 import { authApi, employeeApi } from "@/utils/api";
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
 interface User {
   id: number;

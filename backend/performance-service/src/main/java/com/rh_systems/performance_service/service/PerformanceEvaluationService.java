@@ -1,5 +1,7 @@
 package com.rh_systems.performance_service.service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -61,7 +63,21 @@ public class PerformanceEvaluationService {
      * @return an Optional containing the PerformanceEvaluationDTOGetPostPut if found, or empty otherwise
      */
     public Optional<PerformanceEvaluationDTOGetPostPut> getPerformanceEvaluationByEmployeeIdAndDate(Long employeeId, Date date) {
-        Optional<PerformanceEvaluation> performanceEvaluation = performanceEvaluationRepository.findByEmployeeIdAndDate(employeeId, date);
+        Optional<PerformanceEvaluation> performanceEvaluation;
+
+        if (date != null) {
+            // Convert Date to LocalDate
+            LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            performanceEvaluation = performanceEvaluationRepository.findByEmployeeIdAndEvaluationDate(employeeId, localDate);
+
+            // If not found with LocalDate, try with Date (legacy support)
+            if (!performanceEvaluation.isPresent()) {
+                performanceEvaluation = performanceEvaluationRepository.findByEmployeeIdAndDate(employeeId, date);
+            }
+        } else {
+            return Optional.empty();
+        }
+
         if (performanceEvaluation.isPresent()) {
             PerformanceEvaluationDTOGetPostPut performanceEvaluationDTO = new PerformanceEvaluationDTOGetPostPut();
             performanceEvaluationDTO.convertToPerformanceEvaluationDTO(performanceEvaluation.get());
@@ -76,7 +92,16 @@ public class PerformanceEvaluationService {
      * @return an Optional containing the created PerformanceEvaluationDTOGetPostPut, or empty if a performance evaluation with the same employee and date exists
      */
     public Optional<PerformanceEvaluationDTOGetPostPut> createPerformanceEvaluation(PerformanceEvaluationDTO performanceEvaluationDTO) {
-        if (performanceEvaluationRepository.findByEmployeeIdAndDate(performanceEvaluationDTO.getEmployeeId(), performanceEvaluationDTO.getDate()).isPresent()) {
+        if (performanceEvaluationDTO.getDate() == null) {
+            throw new IllegalArgumentException("Evaluation date cannot be null");
+        }
+
+        // Convert Date to LocalDate for checking existing evaluations
+        LocalDate localDate = performanceEvaluationDTO.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        // Check if an evaluation already exists for this employee and date
+        if (performanceEvaluationRepository.findByEmployeeIdAndEvaluationDate(performanceEvaluationDTO.getEmployeeId(), localDate).isPresent() ||
+            performanceEvaluationRepository.findByEmployeeIdAndDate(performanceEvaluationDTO.getEmployeeId(), performanceEvaluationDTO.getDate()).isPresent()) {
             return Optional.empty();
         }
 
@@ -93,14 +118,24 @@ public class PerformanceEvaluationService {
         }
 
         PerformanceEvaluation performanceEvaluation = new PerformanceEvaluation();
-        performanceEvaluation.setDate(performanceEvaluationDTO.getDate());
+        performanceEvaluation.setEvaluationDate(localDate);
         performanceEvaluation.setComments(performanceEvaluationDTO.getComments());
-        performanceEvaluation.setScore(performanceEvaluationDTO.getScore());
+        performanceEvaluation.setScore((int) performanceEvaluationDTO.getScore());
         performanceEvaluation.setEmployeeId(employee.getId());
+        performanceEvaluation.setEmployeeName(employee.getName());
 
-        PerformanceEvaluationDTOGetPostPut createdPerformanceEvaluationDTO = new PerformanceEvaluationDTOGetPostPut();
-        createdPerformanceEvaluationDTO.convertToPerformanceEvaluationDTO(performanceEvaluationRepository.save(performanceEvaluation));
-        return Optional.of(createdPerformanceEvaluationDTO);
+        // Set default evaluator if not provided
+        if (performanceEvaluation.getEvaluator() == null) {
+            performanceEvaluation.setEvaluator("System");
+        }
+
+        try {
+            PerformanceEvaluationDTOGetPostPut createdPerformanceEvaluationDTO = new PerformanceEvaluationDTOGetPostPut();
+            createdPerformanceEvaluationDTO.convertToPerformanceEvaluationDTO(performanceEvaluationRepository.save(performanceEvaluation));
+            return Optional.of(createdPerformanceEvaluationDTO);
+        } catch (Exception e) {
+            throw new RuntimeException("Error saving performance evaluation: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -110,23 +145,50 @@ public class PerformanceEvaluationService {
      * @return an Optional containing the updated PerformanceEvaluationDTOGetPostPut, or empty if not found or date conflict
      */
     public Optional<PerformanceEvaluationDTOGetPostPut> updatePerformanceEvaluation(Long id, PerformanceEvaluationDTO performanceEvaluationDTO) {
+        if (performanceEvaluationDTO.getDate() == null) {
+            throw new IllegalArgumentException("Evaluation date cannot be null");
+        }
+
         Optional<PerformanceEvaluation> performanceEvaluation = performanceEvaluationRepository.findById(id);
         if (performanceEvaluation.isPresent()) {
-            if (!performanceEvaluation.get().getDate().equals(performanceEvaluationDTO.getDate())) {
-                if (performanceEvaluationRepository.findByEmployeeIdAndDate(performanceEvaluationDTO.getEmployeeId(), performanceEvaluationDTO.getDate()).isPresent()) {
+            // Convert Date to LocalDate for comparison
+            LocalDate dtoDate = performanceEvaluationDTO.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+            // Check if date has changed and if there's already an evaluation for the new date
+            if (dtoDate != null && !performanceEvaluation.get().getEvaluationDate().equals(dtoDate)) {
+                if (performanceEvaluationRepository.findByEmployeeIdAndEvaluationDate(performanceEvaluationDTO.getEmployeeId(), dtoDate).isPresent() ||
+                    performanceEvaluationRepository.findByEmployeeIdAndDate(performanceEvaluationDTO.getEmployeeId(), performanceEvaluationDTO.getDate()).isPresent()) {
                     return Optional.empty();
                 }
             }
+
             PerformanceEvaluation updatedPerformanceEvaluation = performanceEvaluation.get();
-            updatedPerformanceEvaluation.setDate(performanceEvaluationDTO.getDate());
+            updatedPerformanceEvaluation.setEvaluationDate(dtoDate);
             updatedPerformanceEvaluation.setComments(performanceEvaluationDTO.getComments());
-            updatedPerformanceEvaluation.setScore(performanceEvaluationDTO.getScore());
-            // Employee employee = new Employee();
-            // employee.setId(performanceEvaluationDTO.getEmployeeId());
-            // updatedPerformanceEvaluation.setEmployee(employee);
-            PerformanceEvaluationDTOGetPostPut updatedPerformanceEvaluationDTO = new PerformanceEvaluationDTOGetPostPut();
-            updatedPerformanceEvaluationDTO.convertToPerformanceEvaluationDTO(performanceEvaluationRepository.save(updatedPerformanceEvaluation));
-            return Optional.of(updatedPerformanceEvaluationDTO);
+            updatedPerformanceEvaluation.setScore((int) performanceEvaluationDTO.getScore());
+
+            // Try to get updated employee info if employeeId has changed
+            if (!updatedPerformanceEvaluation.getEmployeeId().equals(performanceEvaluationDTO.getEmployeeId())) {
+                try {
+                    EmployeeDTO employee = employeeClient.getEmployeeById(performanceEvaluationDTO.getEmployeeId());
+                    if (employee != null) {
+                        updatedPerformanceEvaluation.setEmployeeId(employee.getId());
+                        updatedPerformanceEvaluation.setEmployeeName(employee.getName());
+                    } else {
+                        throw new RuntimeException("Employee not found with ID: " + performanceEvaluationDTO.getEmployeeId());
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException("Error getting employee data: " + e.getMessage(), e);
+                }
+            }
+
+            try {
+                PerformanceEvaluationDTOGetPostPut updatedPerformanceEvaluationDTO = new PerformanceEvaluationDTOGetPostPut();
+                updatedPerformanceEvaluationDTO.convertToPerformanceEvaluationDTO(performanceEvaluationRepository.save(updatedPerformanceEvaluation));
+                return Optional.of(updatedPerformanceEvaluationDTO);
+            } catch (Exception e) {
+                throw new RuntimeException("Error updating performance evaluation: " + e.getMessage(), e);
+            }
         }
         return Optional.empty();
     }
@@ -151,13 +213,23 @@ public class PerformanceEvaluationService {
      * @return the created performance evaluation
      */
     public PerformanceEvaluation createEvaluation(Long employeeId, EvaluationRequest request) {
-        EmployeeDTO employee = employeeClient.getEmployeeById(employeeId);
-        PerformanceEvaluation evaluation = new PerformanceEvaluation();
-        evaluation.setEmployeeId(employee.getId());
-        evaluation.setEmployeeName(employee.getName());
-        evaluation.setScore(request.getScore());
-        evaluation.setDate(new Date());
-        return performanceEvaluationRepository.save(evaluation);
+        try {
+            EmployeeDTO employee = employeeClient.getEmployeeById(employeeId);
+            if (employee == null) {
+                throw new RuntimeException("Employee not found with ID: " + employeeId);
+            }
+
+            PerformanceEvaluation evaluation = new PerformanceEvaluation();
+            evaluation.setEmployeeId(employee.getId());
+            evaluation.setEmployeeName(employee.getName());
+            evaluation.setScore(request.getScore());
+            evaluation.setEvaluationDate(LocalDate.now());
+            evaluation.setEvaluator("System"); // Default evaluator
+
+            return performanceEvaluationRepository.save(evaluation);
+        } catch (Exception e) {
+            throw new RuntimeException("Error creating evaluation: " + e.getMessage(), e);
+        }
     }
 
     /**

@@ -38,9 +38,6 @@ public class EmployeeDTO {
     @Pattern(regexp = "^(?=.*\\d)(?=.*[@#$%^&+=!]).+$", message = "The password must contain at least one number and one special character")
     private String password;
 
-    @NotBlank(message = "An employee company must be provided")
-    @Size(min = 3, max = 100, message = "The company must be between 3 and 100 characters long")
-    private String company;
 
     @Min(value = 1, message = "The position ID must be greater than 0")
     private Long positionId;
@@ -62,12 +59,11 @@ public class EmployeeDTO {
      * @param email        Employee email
      * @param phone        Employee phone
      * @param password     Employee password
-     * @param company      Employee company
      * @param positionId   Employee position ID
      *
      */
     public EmployeeDTO(String dni, String name, String lastName, String address, String email,
-                       String phone, String password, String company, Long positionId) {
+                       String phone, String password, Long positionId) {
         this.dni = dni;
         this.name = name;
         this.lastName = lastName;
@@ -75,7 +71,6 @@ public class EmployeeDTO {
         this.email = email;
         this.phone = phone;
         this.password = password;
-        this.company = company;
         this.positionId = positionId;
     }
 
@@ -205,23 +200,6 @@ public class EmployeeDTO {
         this.password = password;
     }
 
-    /**
-     * Gets the employee company
-     *
-     * @return Employee company
-     */
-    public String getCompany() {
-        return company;
-    }
-
-    /**
-     * Sets the employee company
-     *
-     * @param company Employee company
-     */
-    public void setCompany(String company) {
-        this.company = company;
-    }
 
     /**
      * Gets the employee position ID
