@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.rh_systems.payroll_service.Entity.PayrollAdjustments;
+import com.rh_systems.payroll_service.Entity.PayrollAdjustments.AdjustmentType;
 
 /**
  * Repository interface for PayrollAdjustments entity.
@@ -17,5 +18,5 @@ public interface PayrollAdjustmentsRepository extends JpaRepository<PayrollAdjus
      * @param type the payroll adjustment type
      * @return an Optional containing the PayrollAdjustments if found, or empty otherwise
      */
-    Optional<PayrollAdjustments> findByPayrollAdjustmentsType(String type);
+    Optional<PayrollAdjustments> findByType(AdjustmentType type);
 }

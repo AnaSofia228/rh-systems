@@ -1,6 +1,6 @@
 package com.rh_systems.performance_service.Entity;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import jakarta.persistence.*;
 
@@ -14,10 +14,12 @@ public class PerformanceEvaluation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Date date;
-    private float score;
+    private LocalDate evaluationDate;
+    private int score;
     private String comments;
     private Long employeeId;
+    private String employeeName;
+    private String evaluator;
 
     /**
      * Default constructor.
@@ -28,18 +30,22 @@ public class PerformanceEvaluation {
     /**
      * Constructor with all fields.
      *
-     * @param id         the ID
-     * @param date       the date
-     * @param score      the score
-     * @param comments   the comments
-     * @param employeeId the employee ID
+     * @param id             the ID
+     * @param evaluationDate the evaluation date
+     * @param score          the score
+     * @param comments       the comments
+     * @param employeeId     the employee ID
+     * @param employeeName   the employee name
+     * @param evaluator      the evaluator
      */
-    public PerformanceEvaluation(Long id, Date date, float score, String comments, Long employeeId) {
+    public PerformanceEvaluation(Long id, LocalDate evaluationDate, int score, String comments, Long employeeId, String employeeName, String evaluator) {
         this.id = id;
-        this.date = date;
+        this.evaluationDate = evaluationDate;
         this.score = score;
         this.comments = comments;
         this.employeeId = employeeId;
+        this.employeeName = employeeName;
+        this.evaluator = evaluator;
     }
 
     /**
@@ -59,26 +65,26 @@ public class PerformanceEvaluation {
     }
 
     /**
-     * Gets the date.
-     * @return the date
+     * Gets the evaluation date.
+     * @return the evaluation date
      */
-    public Date getDate() {
-        return date;
+    public LocalDate getEvaluationDate() {
+        return evaluationDate;
     }
 
     /**
-     * Sets the date.
-     * @param date the date to set
+     * Sets the evaluation date.
+     * @param evaluationDate the evaluation date to set
      */
-    public void setDate(Date date) {
-        this.date = date;
+    public void setEvaluationDate(LocalDate evaluationDate) {
+        this.evaluationDate = evaluationDate;
     }
 
     /**
      * Gets the score.
      * @return the score
      */
-    public float getScore() {
+    public int getScore() {
         return score;
     }
 
@@ -86,7 +92,7 @@ public class PerformanceEvaluation {
      * Sets the score.
      * @param score the score to set
      */
-    public void setScore(float score) {
+    public void setScore(int score) {
         this.score = score;
     }
 
@@ -122,5 +128,41 @@ public class PerformanceEvaluation {
      */
     public void setEmployeeId(Long employeeId) {
         this.employeeId = employeeId;
+    }
+
+    /**
+     * Gets the employee name.
+     *
+     * @return the employee name
+     */
+    public String getEmployeeName() {
+        return employeeName;
+    }
+
+    /**
+     * Sets the employee name.
+     *
+     * @param employeeName the employee name to set
+     */
+    public void setEmployeeName(String employeeName) {
+        this.employeeName = employeeName;
+    }
+
+    /**
+     * Gets the evaluator.
+     *
+     * @return the evaluator
+     */
+    public String getEvaluator() {
+        return evaluator;
+    }
+
+    /**
+     * Sets the evaluator.
+     *
+     * @param evaluator the evaluator to set
+     */
+    public void setEvaluator(String evaluator) {
+        this.evaluator = evaluator;
     }
 }

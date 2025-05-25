@@ -43,13 +43,13 @@ const MySchedule: React.FC = () => {
   const [activeTimeEntry, setActiveTimeEntry] = useState<TimeEntry | null>(null);
   const [timer, setTimer] = useState<number>(0);
   const [isRunning, setIsRunning] = useState<boolean>(false);
-  
+
   // Helper to format date
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   };
-  
+
   // Helper to format time
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -57,7 +57,7 @@ const MySchedule: React.FC = () => {
     const secs = seconds % 60;
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-  
+
   // Helper to get current week dates
   const getWeekDates = (startDate: Date) => {
     const dates = [];
@@ -75,13 +75,13 @@ const MySchedule: React.FC = () => {
     if (storedEntries) {
       setTimeEntries(JSON.parse(storedEntries));
     }
-    
+
     const activeEntry = localStorage.getItem('activeTimeEntry');
     if (activeEntry) {
       const entry = JSON.parse(activeEntry);
       setActiveTimeEntry(entry);
       setIsRunning(true);
-      
+
       // Calculate elapsed time
       const startTime = new Date(entry.startTime).getTime();
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
@@ -92,7 +92,7 @@ const MySchedule: React.FC = () => {
   // Timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    
+
     if (isRunning) {
       interval = setInterval(() => {
         setTimer(prevTime => prevTime + 1);
@@ -100,7 +100,7 @@ const MySchedule: React.FC = () => {
     } else if (interval) {
       clearInterval(interval);
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -111,74 +111,79 @@ const MySchedule: React.FC = () => {
     const fetchSchedules = async () => {
       try {
         setLoading(true);
-        // In a real app, this would come from the API
-        // const response = await scheduleApi.getMySchedules();
-        // setSchedules(response.data);
-        
-        // Mock data for demonstration
-        setTimeout(() => {
-          const today = new Date();
-          
-          // Set weekStartDate to beginning of current week (Sunday)
-          const diff = today.getDate() - today.getDay();
-          const firstDayOfWeek = new Date(today.setDate(diff));
-          setWeekStartDate(firstDayOfWeek);
-          
-          // Generate mock schedules for the week
-          const mockSchedules = [
-            {
-              id: 1,
-              date: new Date(firstDayOfWeek.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Monday
-              startTime: "09:00",
-              endTime: "17:00",
-              location: "Main Office",
-              status: "scheduled",
-              shiftType: "regular"
-            },
-            {
-              id: 2,
-              date: new Date(firstDayOfWeek.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Tuesday
-              startTime: "09:00",
-              endTime: "17:00",
-              location: "Main Office",
-              status: "scheduled",
-              shiftType: "regular"
-            },
-            {
-              id: 3,
-              date: new Date(firstDayOfWeek.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Wednesday
-              startTime: "09:00",
-              endTime: "17:00",
-              location: "Main Office",
-              status: "scheduled",
-              shiftType: "regular"
-            },
-            {
-              id: 4,
-              date: new Date(firstDayOfWeek.getTime() + 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Thursday
-              startTime: "09:00",
-              endTime: "17:00",
-              location: "Main Office",
-              status: "scheduled",
-              shiftType: "regular"
-            },
-            {
-              id: 5,
-              date: new Date(firstDayOfWeek.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Friday
-              startTime: "09:00",
-              endTime: "13:00",
-              location: "Remote",
-              status: "scheduled",
-              shiftType: "half-day"
-            },
-          ];
-          
-          setSchedules(mockSchedules);
+
+        // Get current user from localStorage
+        const userJson = localStorage.getItem('user');
+        if (!userJson) {
           setLoading(false);
-        }, 600);
+          return;
+        }
+
+        const user = JSON.parse(userJson);
+        const employeeId = user.id;
+
+        // Set weekStartDate to beginning of current week (Sunday)
+        const today = new Date();
+        const diff = today.getDate() - today.getDay();
+        const firstDayOfWeek = new Date(today.setDate(diff));
+        setWeekStartDate(firstDayOfWeek);
+
+        // Fetch employee schedules
+        const response = await scheduleApi.getAllEmployeeSchedules();
+        const employeeSchedules = response.data.filter(es => es.employeeId === employeeId);
+
+        // Fetch schedule details for each employee schedule
+        const schedulePromises = employeeSchedules.map(es => 
+          scheduleApi.getById(es.scheduleId)
+        );
+
+        const scheduleResponses = await Promise.all(schedulePromises);
+        const fetchedSchedules = scheduleResponses.map(response => {
+          const schedule = response.data;
+          return {
+            id: schedule.id,
+            date: schedule.date,
+            startTime: schedule.startTime,
+            endTime: schedule.exitTime,
+            location: "Office", // Default location
+            status: "scheduled",
+            shiftType: schedule.totalHours <= 4 ? "half-day" : "regular"
+          };
+        });
+
+        setSchedules(fetchedSchedules);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching schedules:", error);
         setLoading(false);
+
+        // Fallback to mock data if API fails
+        const today = new Date();
+        const diff = today.getDate() - today.getDay();
+        const firstDayOfWeek = new Date(today.setDate(diff));
+
+        const mockSchedules = [
+          {
+            id: 1,
+            date: new Date(firstDayOfWeek.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Monday
+            startTime: "09:00",
+            endTime: "17:00",
+            location: "Main Office",
+            status: "scheduled",
+            shiftType: "regular"
+          },
+          {
+            id: 2,
+            date: new Date(firstDayOfWeek.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Tuesday
+            startTime: "09:00",
+            endTime: "17:00",
+            location: "Main Office",
+            status: "scheduled",
+            shiftType: "regular"
+          }
+        ];
+
+        setSchedules(mockSchedules);
       }
     };
 
@@ -187,7 +192,7 @@ const MySchedule: React.FC = () => {
 
   // Get current week dates
   const weekDates = getWeekDates(weekStartDate);
-  
+
   // Helper to get schedule for a specific date
   const getScheduleForDate = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
@@ -212,7 +217,7 @@ const MySchedule: React.FC = () => {
   const startTimeTracking = () => {
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
-    
+
     const newEntry: TimeEntry = {
       id: Date.now(),
       date: todayStr,
@@ -220,19 +225,19 @@ const MySchedule: React.FC = () => {
       endTime: null,
       duration: null
     };
-    
+
     setActiveTimeEntry(newEntry);
     setIsRunning(true);
     setTimer(0);
-    
+
     localStorage.setItem('activeTimeEntry', JSON.stringify(newEntry));
     toast.success("Time tracking started", {
       description: `Started at ${now.toLocaleTimeString()}`
     });
   };
-  
+
   // Stop time tracking
-  const stopTimeTracking = () => {
+  const stopTimeTracking = async () => {
     if (activeTimeEntry) {
       const now = new Date();
       const endedEntry: TimeEntry = {
@@ -240,24 +245,44 @@ const MySchedule: React.FC = () => {
         endTime: now.toISOString(),
         duration: timer
       };
-      
+
       // Add to time entries list
       const updatedEntries = [...timeEntries, endedEntry];
       setTimeEntries(updatedEntries);
-      
+
       // Store in localStorage
       localStorage.setItem('timeEntries', JSON.stringify(updatedEntries));
       localStorage.removeItem('activeTimeEntry');
-      
+
       setActiveTimeEntry(null);
       setIsRunning(false);
-      
-      toast.success("Time tracking stopped", {
-        description: `Total time: ${formatTime(timer)}`
-      });
-      
-      // In a real app, we'd send this to the backend
-      console.log("Time entry completed:", endedEntry);
+
+      // Calculate hours worked (convert seconds to hours)
+      const hoursWorked = timer / 3600;
+
+      try {
+        // Get current user from localStorage
+        const userJson = localStorage.getItem('user');
+        if (!userJson) {
+          toast.error("User information not found");
+          return;
+        }
+
+        const user = JSON.parse(userJson);
+        const employeeId = user.id;
+
+        // Register hours in the backend
+        await scheduleApi.registerHours(employeeId, hoursWorked);
+
+        toast.success("Time tracking stopped", {
+          description: `Total time: ${formatTime(timer)}`
+        });
+      } catch (error) {
+        console.error("Error registering hours:", error);
+        toast.error("Error registering hours", {
+          description: "Your hours were saved locally but could not be sent to the server."
+        });
+      }
     }
   };
 
@@ -265,11 +290,11 @@ const MySchedule: React.FC = () => {
   const calculateTodaysHours = () => {
     const todayStr = new Date().toISOString().split('T')[0];
     const todaysEntries = timeEntries.filter(entry => entry.date === todayStr);
-    
+
     const totalSeconds = todaysEntries.reduce((total, entry) => {
       return total + (entry.duration || 0);
     }, 0);
-    
+
     return formatTime(totalSeconds);
   };
 
@@ -280,14 +305,14 @@ const MySchedule: React.FC = () => {
       const weekStart = new Date(weekStartDate);
       const weekEnd = new Date(weekStartDate);
       weekEnd.setDate(weekEnd.getDate() + 6);
-      
+
       return entryDate >= weekStart && entryDate <= weekEnd;
     });
-    
+
     const totalSeconds = weekEntries.reduce((total, entry) => {
       return total + (entry.duration || 0);
     }, 0);
-    
+
     return formatTime(totalSeconds);
   };
 
@@ -436,7 +461,7 @@ const MySchedule: React.FC = () => {
                 {weekDates.map((date, index) => {
                   const schedule = getScheduleForDate(date);
                   const isToday = new Date().toDateString() === date.toDateString();
-                  
+
                   return (
                     <div 
                       key={index} 
@@ -450,7 +475,7 @@ const MySchedule: React.FC = () => {
                       <div className="text-sm text-muted-foreground mb-2">
                         {date.toLocaleDateString('en-US', { day: 'numeric' })}
                       </div>
-                      
+
                       {schedule ? (
                         <div className="space-y-2">
                           <Badge className={

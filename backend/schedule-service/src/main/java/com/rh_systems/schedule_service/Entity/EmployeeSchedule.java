@@ -19,17 +19,6 @@ public class EmployeeSchedule {
     @JoinColumn(name = "id_schedule", referencedColumnName = "id", nullable = false)
     private Schedule schedule;
 
-    // @ManyToOne
-    // @JoinColumn(name = "id_employee", referencedColumnName = "id", insertable = false, updatable = false)
-    // private Employee employee;
-
-    // public Employee getEmployee() {
-    //     return employee;
-    // }
-    // public void setEmployee(Employee employee) {
-    //     this.employee = employee;
-    // }
-
     /**
      * Gets the ID.
      * @return the ID

@@ -12,18 +12,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
-import { employeeApi, roleApi } from "@/utils/api";
+import { employeeApi, positionApi } from "@/utils/api";
 
 // Schema for form validation
 const employeeSchema = z.object({
-  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  lastname: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
-  address: z.string().min(5, "Ingrese una dirección válida"),
+  dni: z.string()
+    .min(1, "El DNI debe tener al menos 1 caracter")
+    .max(10, "El DNI no debe exceder 10 caracteres")
+    .regex(/^[0-9]+$/, "El DNI debe contener solo números"),
+  name: z.string().min(3, "El nombre debe tener al menos 3 caracteres").max(100, "El nombre no debe exceder 100 caracteres"),
+  lastName: z.string().min(3, "El apellido debe tener al menos 3 caracteres").max(100, "El apellido no debe exceder 100 caracteres"),
+  address: z.string().min(3, "La dirección debe tener al menos 3 caracteres").max(100, "La dirección no debe exceder 100 caracteres"),
   email: z.string().email("Ingrese un email válido"),
-  phone: z.string().min(8, "Ingrese un número válido"),
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
-  company: z.string().min(2, "Ingrese el nombre de la empresa"),
-  id_position: z.string().min(1, "Seleccione un cargo"),
+  phone: z.string()
+    .max(11, "El teléfono no debe exceder 11 dígitos")
+    .regex(/^[0-9]+$/, "El teléfono debe contener solo números"),
+  password: z.string()
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    .max(100, "La contraseña no debe exceder 100 caracteres")
+    .regex(/^(?=.*\d)(?=.*[@#$%^&+=!]).+$/, "La contraseña debe contener al menos un número y un caracter especial"),
+  company: z.string().min(3, "La empresa debe tener al menos 3 caracteres").max(100, "La empresa no debe exceder 100 caracteres"),
+  positionId: z.string().min(1, "Seleccione un cargo"),
 });
 
 type EmployeeFormValues = z.infer<typeof employeeSchema>;
@@ -37,22 +46,23 @@ const EmployeeForm = () => {
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeSchema),
     defaultValues: {
+      dni: "",
       name: "",
-      lastname: "",
+      lastName: "",
       address: "",
       email: "",
       phone: "",
       password: "",
       company: "",
-      id_position: "",
+      positionId: "",
     },
   });
 
-  // Fetch roles for dropdown
-  const { data: roles = [] } = useQuery({
-    queryKey: ["roles"],
+  // Fetch positions for dropdown
+  const { data: positions = [] } = useQuery({
+    queryKey: ["positions"],
     queryFn: async () => {
-      const response = await roleApi.getAll();
+      const response = await positionApi.getAll();
       return response.data || [];
     },
   });
@@ -64,19 +74,20 @@ const EmployeeForm = () => {
       if (!isEditMode) return null;
       const response = await employeeApi.getById(Number(id));
       const employee = response.data;
-      
+
       // Populate the form
       form.reset({
+        dni: employee.dni,
         name: employee.name,
-        lastname: employee.lastname,
+        lastName: employee.lastName,
         address: employee.address,
         email: employee.email,
         phone: employee.phone,
         password: "", // Don't populate password for security reasons
         company: employee.company,
-        id_position: String(employee.id_position),
+        positionId: String(employee.positionId),
       });
-      
+
       return employee;
     },
     enabled: isEditMode,
@@ -84,22 +95,23 @@ const EmployeeForm = () => {
 
   const onSubmit = async (data: EmployeeFormValues) => {
     try {
+      const employeeData = {
+        ...data,
+        positionId: Number(data.positionId),
+      };
+
       if (isEditMode) {
-        await employeeApi.update(Number(id), {
-          ...data,
-          id_position: Number(data.id_position),
-        });
+        await employeeApi.update(Number(id), employeeData);
         toast.success("Empleado actualizado con éxito");
       } else {
-        await employeeApi.create({
-          ...data,
-          id_position: Number(data.id_position),
-        });
+        await employeeApi.create(employeeData);
         toast.success("Empleado creado con éxito");
       }
       navigate("/admin/employees");
     } catch (error) {
-      toast.error("Error al guardar el empleado");
+      toast.error("Error al guardar el empleado", {
+        description: error instanceof Error ? error.message : "Ocurrió un error inesperado"
+      });
       console.error("Error saving employee:", error);
     }
   };
@@ -127,10 +139,10 @@ const EmployeeForm = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
-                  name="lastname"
+                  name="lastName"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Apellidos</FormLabel>
@@ -141,7 +153,7 @@ const EmployeeForm = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="email"
@@ -155,7 +167,7 @@ const EmployeeForm = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="phone"
@@ -169,7 +181,7 @@ const EmployeeForm = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="address"
@@ -183,7 +195,7 @@ const EmployeeForm = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="company"
@@ -197,7 +209,7 @@ const EmployeeForm = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="password"
@@ -211,10 +223,10 @@ const EmployeeForm = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
-                  name="id_position"
+                  name="positionId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Cargo</FormLabel>
@@ -229,9 +241,9 @@ const EmployeeForm = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {roles.map((role) => (
-                            <SelectItem key={role.id} value={String(role.id)}>
-                              {role.name}
+                          {positions.map((position) => (
+                            <SelectItem key={position.id} value={String(position.id)}>
+                              {position.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -241,7 +253,7 @@ const EmployeeForm = () => {
                   )}
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-4">
                 <Button
                   type="button"

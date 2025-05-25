@@ -10,8 +10,10 @@ import com.rh_systems.payroll_service.Entity.Payroll;
 public class PayrollDTOGetPostPut {
     private Long id;
     private String status;
-    private float amount;
-    private Date paymentDate;
+    private float baseSalary;
+    private float totalAdjustments;
+    private float netSalary;
+    private Date issueDate;
     private Long employeeId;
 
     /**
@@ -47,35 +49,67 @@ public class PayrollDTOGetPostPut {
     }
 
     /**
-     * Gets the amount.
-     * @return the amount
+     * Gets the base salary.
+     * @return the base salary
      */
-    public float getAmount() {
-        return amount;
+    public float getBaseSalary() {
+        return baseSalary;
     }
 
     /**
-     * Sets the amount.
-     * @param amount the amount to set
+     * Sets the base salary.
+     * @param baseSalary the base salary to set
      */
-    public void setAmount(float amount) {
-        this.amount = amount;
+    public void setBaseSalary(float baseSalary) {
+        this.baseSalary = baseSalary;
     }
 
     /**
-     * Gets the payment date.
-     * @return the payment date
+     * Gets the total adjustments.
+     * @return the total adjustments
      */
-    public Date getPaymentDate() {
-        return paymentDate;
+    public float getTotalAdjustments() {
+        return totalAdjustments;
     }
 
     /**
-     * Sets the payment date.
-     * @param paymentDate the payment date to set
+     * Sets the total adjustments.
+     * @param totalAdjustments the total adjustments to set
      */
-    public void setPaymentDate(Date paymentDate) {
-        this.paymentDate = paymentDate;
+    public void setTotalAdjustments(float totalAdjustments) {
+        this.totalAdjustments = totalAdjustments;
+    }
+
+    /**
+     * Gets the net salary.
+     * @return the net salary
+     */
+    public float getNetSalary() {
+        return netSalary;
+    }
+
+    /**
+     * Sets the net salary.
+     * @param netSalary the net salary to set
+     */
+    public void setNetSalary(float netSalary) {
+        this.netSalary = netSalary;
+    }
+
+    /**
+     * Gets the issue date.
+     * @return the issue date
+     */
+    public Date getIssueDate() {
+        return issueDate;
+    }
+
+    /**
+     * Sets the issue date.
+     * @param issueDate the issue date to set
+     */
+    public void setIssueDate(Date issueDate) {
+        this.issueDate = issueDate;
     }
 
     /**
@@ -101,8 +135,10 @@ public class PayrollDTOGetPostPut {
     public void convertToPayrollDTO(Payroll payrollEntity) {
         this.setId(payrollEntity.getId());
         this.setStatus(payrollEntity.getStatus());
-        this.setAmount(payrollEntity.getAmount());
-        this.setPaymentDate(payrollEntity.getPaymentDate());
-        // this.setEmployeeId(payrollEntity.getEmployee().getId());
+        this.setBaseSalary(payrollEntity.getBaseSalary());
+        this.setTotalAdjustments(payrollEntity.getTotalAdjustments());
+        this.setNetSalary(payrollEntity.getNetSalary());
+        this.setIssueDate(payrollEntity.getIssueDate());
+        this.setEmployeeId(payrollEntity.getEmployeeId());
     }
 }

@@ -5,9 +5,9 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "employee-service")
+@FeignClient(name = "employee-service", url = "${EMPLOYEE_SERVICE_URL}")
 public interface EmployeeClient {
 
-    @GetMapping("/employees/{id}")
-    EmployeeDTO getEmployeeById(@PathVariable("id") Long id);
+    @GetMapping("/api/employees/{id}")
+    EmployeeDTO getEmployeeById(@PathVariable Long id);
 }

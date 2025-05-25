@@ -1,9 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Calendar, Download, DollarSign, Clock, FileText, TrendingUp } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const MyPayroll = () => {
   // Mock data for payroll history
@@ -13,6 +16,115 @@ const MyPayroll = () => {
     { id: 3, period: "Abril 2025 (1ra quincena)", date: "15/04/2025", grossPay: 4100.00, deductions: 984.00, netPay: 3116.00 },
     { id: 4, period: "Marzo 2025 (2da quincena)", date: "31/03/2025", grossPay: 4100.00, deductions: 984.00, netPay: 3116.00 },
   ]);
+
+  // Function to generate and download PDF
+  const generatePayrollPDF = (payroll) => {
+    try {
+      // Create a new PDF document
+      const doc = new jsPDF();
+
+      // Add company logo or header
+      doc.setFontSize(20);
+      doc.setTextColor(0, 51, 102);
+      doc.text("RH Systems", 105, 20, { align: "center" });
+
+      // Add payroll title
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Recibo de Nómina - ${payroll.period}`, 105, 30, { align: "center" });
+
+      // Add date and employee info
+      doc.setFontSize(10);
+      doc.text(`Fecha de emisión: ${payroll.date}`, 20, 45);
+      doc.text(`Empleado: Juan Pérez`, 20, 50);
+      doc.text(`Posición: Desarrollador Senior`, 20, 55);
+      doc.text(`ID de Empleado: EMP-2023-001`, 20, 60);
+
+      // Add horizontal line
+      doc.setDrawColor(220, 220, 220);
+      doc.line(20, 65, 190, 65);
+
+      // Add summary section
+      doc.setFontSize(12);
+      doc.setTextColor(0, 51, 102);
+      doc.text("Resumen de Pago", 20, 75);
+
+      // Add summary table
+      doc.autoTable({
+        startY: 80,
+        head: [["Concepto", "Monto"]],
+        body: [
+          ["Salario Base", `$${currentPay.baseSalary.toLocaleString('es-MX', {minimumFractionDigits: 2})}`],
+          ["Horas Extra", `$${currentPay.overtime.toLocaleString('es-MX', {minimumFractionDigits: 2})}`],
+          ["Bonos", `$${currentPay.bonus.toLocaleString('es-MX', {minimumFractionDigits: 2})}`],
+          ["Pago Bruto", `$${payroll.grossPay.toLocaleString('es-MX', {minimumFractionDigits: 2})}`],
+          ["Deducciones", `-$${payroll.deductions.toLocaleString('es-MX', {minimumFractionDigits: 2})}`],
+          ["Pago Neto", `$${payroll.netPay.toLocaleString('es-MX', {minimumFractionDigits: 2})}`]
+        ],
+        theme: 'striped',
+        headStyles: { fillColor: [0, 51, 102], textColor: [255, 255, 255] },
+        alternateRowStyles: { fillColor: [240, 240, 240] },
+        columnStyles: {
+          0: { cellWidth: 100 },
+          1: { cellWidth: 70, halign: 'right' }
+        }
+      });
+
+      // Add deductions breakdown
+      const finalY = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(12);
+      doc.setTextColor(0, 51, 102);
+      doc.text("Desglose de Deducciones", 20, finalY);
+
+      doc.autoTable({
+        startY: finalY + 5,
+        head: [["Concepto", "Monto"]],
+        body: [
+          ["Impuestos", `$${currentPay.taxes.toLocaleString('es-MX', {minimumFractionDigits: 2})}`],
+          ["Seguro Médico", `$${currentPay.insurance.toLocaleString('es-MX', {minimumFractionDigits: 2})}`],
+          ["Otros", `$${currentPay.otherDeductions.toLocaleString('es-MX', {minimumFractionDigits: 2})}`],
+          ["Total Deducciones", `$${currentPay.totalDeductions.toLocaleString('es-MX', {minimumFractionDigits: 2})}`]
+        ],
+        theme: 'striped',
+        headStyles: { fillColor: [153, 0, 0], textColor: [255, 255, 255] },
+        alternateRowStyles: { fillColor: [240, 240, 240] },
+        columnStyles: {
+          0: { cellWidth: 100 },
+          1: { cellWidth: 70, halign: 'right' }
+        }
+      });
+
+      // Add footer
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.text(
+          `Este documento es un comprobante de pago y no requiere firma. Página ${i} de ${pageCount}`,
+          105,
+          doc.internal.pageSize.height - 10,
+          { align: "center" }
+        );
+      }
+
+      // Save the PDF
+      doc.save(`Nomina_${payroll.period.replace(/\s/g, '_')}.pdf`);
+
+      // Show success message
+      toast({
+        title: "PDF generado con éxito",
+        description: `Se ha descargado el recibo de nómina para ${payroll.period}`,
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "Error al generar PDF",
+        description: "Ocurrió un error al generar el PDF. Por favor intente nuevamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Mock data for current pay details
   const currentPay = {
@@ -109,7 +221,11 @@ const MyPayroll = () => {
                       <TableCell className="text-red-600">-${item.deductions.toLocaleString('es-MX', {minimumFractionDigits: 2})}</TableCell>
                       <TableCell className="font-bold">${item.netPay.toLocaleString('es-MX', {minimumFractionDigits: 2})}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => generatePayrollPDF(item)}
+                        >
                           <Download size={14} className="mr-1" />
                           PDF
                         </Button>
@@ -177,9 +293,25 @@ const MyPayroll = () => {
                 </div>
 
                 <div className="bg-secondary p-4 rounded-md">
-                  <div className="flex justify-between font-semibold">
-                    <span>Pago neto</span>
-                    <span className="text-primary text-lg">${currentPay.netPay.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                  <div className="flex justify-between items-center">
+                    <div className="font-semibold">
+                      <span>Pago neto</span>
+                      <span className="text-primary text-lg ml-2">${currentPay.netPay.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <Button 
+                      onClick={() => generatePayrollPDF({
+                        id: 1,
+                        period: "Mayo 2025 (1ra quincena)",
+                        date: currentPay.paymentDate,
+                        grossPay: currentPay.grossPay,
+                        deductions: currentPay.totalDeductions,
+                        netPay: currentPay.netPay
+                      })}
+                      className="bg-primary hover:bg-primary/90"
+                    >
+                      <Download size={16} className="mr-2" />
+                      Descargar PDF
+                    </Button>
                   </div>
                 </div>
               </div>

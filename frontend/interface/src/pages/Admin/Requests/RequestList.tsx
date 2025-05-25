@@ -1,70 +1,96 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Calendar, Check, Clock, Filter, Mail, Search, User, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { statusApi, employeeApi } from "@/utils/api";
+import { toast } from "@/components/ui/sonner";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+
+interface StatusWithEmployee {
+  id: number;
+  type: string;
+  startDate: Date;
+  endDate: Date;
+  paid: number;
+  description: string;
+  employeeId: number;
+  statusPermissionId: number;
+  employee?: {
+    name: string;
+    lastName: string;
+  };
+  status?: string; // Pending, Approved, Rejected
+  submittedDate?: string;
+}
 
 const RequestList = () => {
-  // Mock data for requests
-  const [requests] = useState([
-    { 
-      id: 1, 
-      employee: "Carlos Mendoza", 
-      type: "Vacaciones", 
-      startDate: "12/06/2025", 
-      endDate: "26/06/2025", 
-      days: 10, 
-      reason: "Vacaciones familiares anuales",
-      status: "Pendiente", 
-      submittedDate: "28/04/2025" 
-    },
-    { 
-      id: 2, 
-      employee: "Laura Torres", 
-      type: "Permiso", 
-      startDate: "15/05/2025", 
-      endDate: "15/05/2025", 
-      days: 1, 
-      reason: "Cita médica",
-      status: "Aprobado", 
-      submittedDate: "05/05/2025" 
-    },
-    { 
-      id: 3, 
-      employee: "Roberto Sánchez", 
-      type: "Permiso", 
-      startDate: "10/05/2025", 
-      endDate: "10/05/2025", 
-      days: 0.5, 
-      reason: "Asuntos personales (medio día)",
-      status: "Rechazado", 
-      submittedDate: "03/05/2025" 
-    },
-    { 
-      id: 4, 
-      employee: "Ana Ramírez", 
-      type: "Vacaciones", 
-      startDate: "01/07/2025", 
-      endDate: "15/07/2025", 
-      days: 10, 
-      reason: "Vacaciones de verano",
-      status: "Pendiente", 
-      submittedDate: "02/05/2025" 
-    },
-    { 
-      id: 5, 
-      employee: "Miguel Ángel Díaz", 
-      type: "Licencia", 
-      startDate: "20/05/2025", 
-      endDate: "03/06/2025", 
-      days: 10, 
-      reason: "Licencia por paternidad",
-      status: "Aprobado", 
-      submittedDate: "20/04/2025" 
-    },
-  ]);
+  const [requests, setRequests] = useState<StatusWithEmployee[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    pending: 0,
+    approved: 0,
+    rejected: 0
+  });
+
+  // Fetch status requests
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        setLoading(true);
+        const response = await statusApi.getAll();
+        const statuses = response.data;
+
+        // Fetch employee details for each status
+        const statusesWithEmployees = await Promise.all(
+          statuses.map(async (status: StatusWithEmployee) => {
+            try {
+              const employeeResponse = await employeeApi.getById(status.employeeId);
+              return {
+                ...status,
+                employee: {
+                  name: employeeResponse.data.name,
+                  lastName: employeeResponse.data.lastName
+                },
+                // For demo purposes, assign random status
+                status: ["Pendiente", "Aprobado", "Rechazado"][Math.floor(Math.random() * 3)],
+                submittedDate: format(new Date(), "dd/MM/yyyy", { locale: es })
+              };
+            } catch (error) {
+              console.error(`Error fetching employee ${status.employeeId}:`, error);
+              return {
+                ...status,
+                employee: { name: "Usuario", lastName: "Desconocido" },
+                status: "Pendiente",
+                submittedDate: format(new Date(), "dd/MM/yyyy", { locale: es })
+              };
+            }
+          })
+        );
+
+        setRequests(statusesWithEmployees);
+
+        // Calculate stats
+        const pending = statusesWithEmployees.filter(r => r.status === "Pendiente").length;
+        const approved = statusesWithEmployees.filter(r => r.status === "Aprobado").length;
+        const rejected = statusesWithEmployees.filter(r => r.status === "Rechazado").length;
+
+        setStats({ pending, approved, rejected });
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching requests:", error);
+        toast.error("Error al cargar las solicitudes", {
+          description: "No se pudieron cargar las solicitudes. Intente nuevamente."
+        });
+        setLoading(false);
+      }
+    };
+
+    fetchRequests();
+  }, []);
 
   // Get status style based on status value
   const getStatusStyle = (status: string) => {
@@ -76,6 +102,78 @@ const RequestList = () => {
       default:
         return "bg-amber-100 text-amber-800";
     }
+  };
+
+  // Handle approve request
+  const handleApprove = async (id: number) => {
+    try {
+      // In a real implementation, you would update the status in the backend
+      // await statusApi.update(id, { status: 'approved' });
+
+      // For now, we'll just update the local state
+      setRequests(prev => 
+        prev.map(req => 
+          req.id === id ? { ...req, status: "Aprobado" } : req
+        )
+      );
+
+      // Update stats
+      setStats(prev => ({
+        ...prev,
+        pending: prev.pending - 1,
+        approved: prev.approved + 1
+      }));
+
+      toast.success("Solicitud aprobada con éxito");
+    } catch (error) {
+      toast.error("Error al aprobar la solicitud", {
+        description: "No se pudo aprobar la solicitud. Intente nuevamente."
+      });
+      console.error("Error approving request:", error);
+    }
+  };
+
+  // Handle reject request
+  const handleReject = async (id: number) => {
+    try {
+      // In a real implementation, you would update the status in the backend
+      // await statusApi.update(id, { status: 'rejected' });
+
+      // For now, we'll just update the local state
+      setRequests(prev => 
+        prev.map(req => 
+          req.id === id ? { ...req, status: "Rechazado" } : req
+        )
+      );
+
+      // Update stats
+      setStats(prev => ({
+        ...prev,
+        pending: prev.pending - 1,
+        rejected: prev.rejected + 1
+      }));
+
+      toast.success("Solicitud rechazada con éxito");
+    } catch (error) {
+      toast.error("Error al rechazar la solicitud", {
+        description: "No se pudo rechazar la solicitud. Intente nuevamente."
+      });
+      console.error("Error rejecting request:", error);
+    }
+  };
+
+  // Calculate days between two dates
+  const calculateDays = (startDate: Date, endDate: Date) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays + 1; // Include both start and end days
+  };
+
+  // Format date for display
+  const formatDate = (date: Date) => {
+    return format(new Date(date), "dd/MM/yyyy", { locale: es });
   };
 
   return (
@@ -100,7 +198,7 @@ const RequestList = () => {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-amber-800 font-medium mb-1">Pendientes</p>
-                <h3 className="text-2xl font-bold">7</h3>
+                <h3 className="text-2xl font-bold">{stats.pending}</h3>
               </div>
               <div className="h-12 w-12 bg-amber-100 rounded-full flex items-center justify-center">
                 <Clock className="h-6 w-6 text-amber-800" />
@@ -113,7 +211,7 @@ const RequestList = () => {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-green-800 font-medium mb-1">Aprobadas</p>
-                <h3 className="text-2xl font-bold">12</h3>
+                <h3 className="text-2xl font-bold">{stats.approved}</h3>
               </div>
               <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
                 <Check className="h-6 w-6 text-green-800" />
@@ -126,7 +224,7 @@ const RequestList = () => {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-red-800 font-medium mb-1">Rechazadas</p>
-                <h3 className="text-2xl font-bold">3</h3>
+                <h3 className="text-2xl font-bold">{stats.rejected}</h3>
               </div>
               <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
                 <X className="h-6 w-6 text-red-800" />
@@ -141,7 +239,11 @@ const RequestList = () => {
           <CardTitle>Todas las solicitudes</CardTitle>
           <div className="flex justify-between items-center mt-2">
             <div className="text-sm text-muted-foreground">
-              Mostrando 5 de 22 solicitudes
+              {loading ? (
+                "Cargando solicitudes..."
+              ) : (
+                `Mostrando ${requests.length} solicitudes`
+              )}
             </div>
             <div className="flex w-full max-w-sm items-center space-x-2">
               <Input 
@@ -156,78 +258,98 @@ const RequestList = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Empleado</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Fechas</TableHead>
-                <TableHead>Días</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {requests.map(request => (
-                <TableRow key={request.id}>
-                  <TableCell>
-                    <div className="font-medium flex items-center">
-                      <User size={16} className="mr-2 text-gray-500" />
-                      {request.employee}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Enviado: {request.submittedDate}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      {request.type === "Vacaciones" ? (
-                        <Calendar size={16} className="mr-2 text-blue-500" />
-                      ) : (
-                        <Clock size={16} className="mr-2 text-purple-500" />
-                      )}
-                      {request.type}
-                    </div>
-                    <div className="text-xs text-muted-foreground line-clamp-1">
-                      {request.reason}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>{request.startDate}</div>
-                    {request.startDate !== request.endDate && (
-                      <div className="text-xs text-muted-foreground">
-                        hasta {request.endDate}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>{request.days}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-md text-xs ${getStatusStyle(request.status)}`}>
-                      {request.status}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {request.status === "Pendiente" ? (
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" className="bg-green-50 hover:bg-green-100 border-green-200">
-                          <Check size={14} className="mr-1 text-green-700" />
-                          Aprobar
-                        </Button>
-                        <Button variant="outline" size="sm" className="bg-red-50 hover:bg-red-100 border-red-200">
-                          <X size={14} className="mr-1 text-red-700" />
-                          Rechazar
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button variant="ghost" size="sm">
-                        Ver detalles
-                      </Button>
-                    )}
-                  </TableCell>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : requests.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No hay solicitudes disponibles
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Empleado</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Fechas</TableHead>
+                  <TableHead>Días</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {requests.map(request => (
+                  <TableRow key={request.id}>
+                    <TableCell>
+                      <div className="font-medium flex items-center">
+                        <User size={16} className="mr-2 text-gray-500" />
+                        {request.employee ? `${request.employee.name} ${request.employee.lastName}` : "Usuario Desconocido"}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Enviado: {request.submittedDate}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        {request.type.toLowerCase().includes("vacacion") ? (
+                          <Calendar size={16} className="mr-2 text-blue-500" />
+                        ) : (
+                          <Clock size={16} className="mr-2 text-purple-500" />
+                        )}
+                        {request.type}
+                      </div>
+                      <div className="text-xs text-muted-foreground line-clamp-1">
+                        {request.description}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>{formatDate(request.startDate)}</div>
+                      {formatDate(request.startDate) !== formatDate(request.endDate) && (
+                        <div className="text-xs text-muted-foreground">
+                          hasta {formatDate(request.endDate)}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>{calculateDays(request.startDate, request.endDate)}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-md text-xs ${getStatusStyle(request.status || "Pendiente")}`}>
+                        {request.status || "Pendiente"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {request.status === "Pendiente" ? (
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="bg-green-50 hover:bg-green-100 border-green-200"
+                            onClick={() => handleApprove(request.id)}
+                          >
+                            <Check size={14} className="mr-1 text-green-700" />
+                            Aprobar
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="bg-red-50 hover:bg-red-100 border-red-200"
+                            onClick={() => handleReject(request.id)}
+                          >
+                            <X size={14} className="mr-1 text-red-700" />
+                            Rechazar
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button variant="ghost" size="sm">
+                          Ver detalles
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import com.rh_systems.payroll_service.client.EmployeeClient;
 import com.rh_systems.payroll_service.dto.EmployeeDTO;
+import com.rh_systems.payroll_service.dto.PositionDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,21 +31,26 @@ public class PayrollService {
      * */
     public Optional<PayrollDTOGetPostPut> createPayrollWithEmployeeValidation(PayrollDTO payrollDTO) {
         EmployeeDTO employee;
-        try{
+        PositionDTO position;
+        try {
             employee = employeeClient.getEmployeeById(payrollDTO.getEmployeeId());
+            position = employeeClient.getPositionByName(employee.getPosition());
         } catch (Exception e) {
-            throw new RuntimeException("Error getting employee data" + e.getMessage());
+            throw new RuntimeException("Error getting employee or position data: " + e.getMessage());
         }
-        if (employee == null) {
+        if (employee == null || position == null) {
             return Optional.empty();
         }
         if (payrollRepository.findByPayrollStatus(payrollDTO.getStatus()).isPresent()) {
             return Optional.empty();
         }
+
         Payroll payroll = new Payroll();
         payroll.setStatus(payrollDTO.getStatus());
-        payroll.setPaymentDate(payrollDTO.getPaymentDate());
-        payroll.setAmount(payrollDTO.getAmount());
+        payroll.setIssueDate(payrollDTO.getIssueDate());
+        payroll.setBaseSalary(position.getBaseSalary());
+        payroll.setTotalAdjustments(0); // Will be updated when adjustments are added
+        payroll.setNetSalary(position.getBaseSalary()); // Initially, net salary equals base salary
         payroll.setEmployeeId(employee.getId());
 
         Payroll savePayroll = payrollRepository.save(payroll);
@@ -52,7 +58,6 @@ public class PayrollService {
         PayrollDTOGetPostPut payrollDTOGetPostPut = new PayrollDTOGetPostPut();
         payrollDTOGetPostPut.convertToPayrollDTO(savePayroll);
         return Optional.of(payrollDTOGetPostPut);
-
     }
 
     /**
@@ -109,13 +114,27 @@ public class PayrollService {
         if (payrollRepository.findByPayrollStatus(payrollDTO.getStatus()).isPresent()) {
             return Optional.empty();
         }
+
+        EmployeeDTO employee;
+        PositionDTO position;
+        try {
+            employee = employeeClient.getEmployeeById(payrollDTO.getEmployeeId());
+            position = employeeClient.getPositionByName(employee.getPosition());
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting employee or position data: " + e.getMessage());
+        }
+        if (employee == null || position == null) {
+            return Optional.empty();
+        }
+
         Payroll payroll = new Payroll();
         payroll.setStatus(payrollDTO.getStatus());
-        payroll.setPaymentDate(payrollDTO.getPaymentDate());
-        payroll.setAmount(payrollDTO.getAmount());
-        // Employee employee = new Employee();
-        // employee.setId(payrollDTO.getEmployeeId());
-        // payroll.setEmployee(employee);
+        payroll.setIssueDate(payrollDTO.getIssueDate());
+        payroll.setBaseSalary(position.getBaseSalary());
+        payroll.setTotalAdjustments(0); // Will be updated when adjustments are added
+        payroll.setNetSalary(position.getBaseSalary()); // Initially, net salary equals base salary
+        payroll.setEmployeeId(payrollDTO.getEmployeeId());
+
         PayrollDTOGetPostPut savedPayroll = new PayrollDTOGetPostPut();
         savedPayroll.convertToPayrollDTO(payrollRepository.save(payroll));
         return Optional.of(savedPayroll);
@@ -135,13 +154,28 @@ public class PayrollService {
                     return Optional.empty();
                 }
             }
+
+            EmployeeDTO employee;
+            PositionDTO position;
+            try {
+                employee = employeeClient.getEmployeeById(payrollDTO.getEmployeeId());
+                position = employeeClient.getPositionByName(employee.getPosition());
+            } catch (Exception e) {
+                throw new RuntimeException("Error getting employee or position data: " + e.getMessage());
+            }
+            if (employee == null || position == null) {
+                return Optional.empty();
+            }
+
             Payroll payrollToUpdate = payroll.get();
             payrollToUpdate.setStatus(payrollDTO.getStatus());
-            payrollToUpdate.setPaymentDate(payrollDTO.getPaymentDate());
-            payrollToUpdate.setAmount(payrollDTO.getAmount());
-            // Employee employee = new Employee();
-            // employee.setId(payrollDTO.getEmployeeId());
-            // payrollToUpdate.setEmployee(employee);
+            payrollToUpdate.setIssueDate(payrollDTO.getIssueDate());
+            payrollToUpdate.setBaseSalary(position.getBaseSalary());
+            // Keep existing total adjustments
+            // Recalculate net salary
+            payrollToUpdate.setNetSalary(position.getBaseSalary() + payrollToUpdate.getTotalAdjustments());
+            payrollToUpdate.setEmployeeId(payrollDTO.getEmployeeId());
+
             PayrollDTOGetPostPut updatedPayrollDTO = new PayrollDTOGetPostPut();
             updatedPayrollDTO.convertToPayrollDTO(payrollRepository.save(payrollToUpdate));
             return Optional.of(updatedPayrollDTO);
@@ -160,5 +194,31 @@ public class PayrollService {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Generates a PDF for a payroll record.
+     * 
+     * @param id the payroll ID
+     * @return an Optional containing the PDF content as a byte array if the payroll exists, or empty otherwise
+     */
+    public Optional<byte[]> generatePayrollPdf(Long id) {
+        Optional<Payroll> payrollOpt = payrollRepository.findById(id);
+        if (payrollOpt.isPresent()) {
+            Payroll payroll = payrollOpt.get();
+
+            // In a real implementation, this would use a PDF library like iText or OpenPDF
+            // For testing purposes, we'll just create a simple byte array
+            String content = "Payroll ID: " + payroll.getId() + "\n" +
+                             "Status: " + payroll.getStatus() + "\n" +
+                             "Issue Date: " + payroll.getIssueDate() + "\n" +
+                             "Base Salary: " + payroll.getBaseSalary() + "\n" +
+                             "Total Adjustments: " + payroll.getTotalAdjustments() + "\n" +
+                             "Net Salary: " + payroll.getNetSalary() + "\n" +
+                             "Employee ID: " + payroll.getEmployeeId();
+
+            return Optional.of(content.getBytes());
+        }
+        return Optional.empty();
     }
 }

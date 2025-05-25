@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,13 +12,18 @@ import com.rh_systems.schedule_service.dto.CountEmployeeScheduleDTO;
 import com.rh_systems.schedule_service.dto.CountEmployeeScheduleDTOGetPostPut;
 import com.rh_systems.schedule_service.service.CountEmployeeScheduleService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 /**
  * REST controller for managing count employee schedules.
  */
 @RestController
-@RequestMapping("/api/count-employee-schedule")
+@RequestMapping("/api/count-schedule")
+@Tag(name = "Conteo de Horas", description = "Gestion del conteo de horas trabajadas por empleado")
 public class CountEmployeeScheduleController {
     @Autowired
     private CountEmployeeScheduleService countEmployeeScheduleService;
@@ -88,5 +94,29 @@ public class CountEmployeeScheduleController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    /**
+     * Registers hours worked for an employee.
+     * @param employeeId the employee ID
+     * @param hours the hours worked
+     * @return a ResponseEntity with status 200 if registered successfully
+     */
+    @Operation(summary = "Registrar horas trabajadas")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Horas registradas correctamente"),
+        @ApiResponse(responseCode = "400", description = "Solicitud inválida")
+    })
+    @PostMapping("/{employeeId}")
+    public ResponseEntity<Void> addHours(
+        @PathVariable Long employeeId,
+        @RequestParam float hours
+    ) {
+        if (hours <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        countEmployeeScheduleService.registerWorkHours(employeeId, hours);
+        return ResponseEntity.ok().build();
     }
 }

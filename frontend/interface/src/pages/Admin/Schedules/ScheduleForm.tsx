@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,18 +11,22 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { toast } from "@/components/ui/sonner";
-import { scheduleApi } from "@/utils/api";
+import { scheduleApi, employeeApi } from "@/utils/api";
+import { Checkbox } from "@/components/ui/checkbox";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 // Schema for form validation
 const scheduleSchema = z.object({
-  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+  date: z.string().min(1, "La fecha es requerida"),
   startTime: z.string().min(5, "Seleccione una hora de inicio"),
+  exitTime: z.string().min(5, "Seleccione una hora de fin"),
   totalHours: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
     message: "Las horas totales deben ser un número positivo",
   }),
-  deductHours: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+  deductedHours: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
     message: "Las horas a deducir deben ser un número positivo o cero",
   }),
+  employeeIds: z.array(z.number()).optional(),
 });
 
 type ScheduleFormValues = z.infer<typeof scheduleSchema>;
@@ -31,17 +35,35 @@ const ScheduleForm = () => {
   const { id } = useParams();
   const isEditMode = !!id;
   const navigate = useNavigate();
+  const [selectedEmployees, setSelectedEmployees] = useState<{ value: number; label: string }[]>([]);
 
   // Form initialization
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
-      name: "",
-      startTime: "",
+      date: new Date().toISOString().split('T')[0],
+      startTime: "09:00",
+      exitTime: "17:00",
       totalHours: "8",
-      deductHours: "0",
+      deductedHours: "0",
+      employeeIds: [],
     },
   });
+
+  // Fetch employees for the dropdown
+  const { data: employees = [] } = useQuery({
+    queryKey: ["employees"],
+    queryFn: async () => {
+      const response = await employeeApi.getAll();
+      return response.data || [];
+    },
+  });
+
+  // Convert employees to options for the multi-select
+  const employeeOptions = employees.map(employee => ({
+    value: employee.id!,
+    label: `${employee.name} ${employee.lastName}`
+  }));
 
   // Fetch schedule if in edit mode
   useQuery({
@@ -50,28 +72,41 @@ const ScheduleForm = () => {
       if (!isEditMode) return null;
       const response = await scheduleApi.getById(Number(id));
       const schedule = response.data;
-      
+
       // Populate the form
       form.reset({
-        name: schedule.name,
+        date: schedule.date,
         startTime: schedule.startTime,
+        exitTime: schedule.exitTime,
         totalHours: String(schedule.totalHours),
-        deductHours: String(schedule.deductHours),
+        deductedHours: String(schedule.deductedHours),
+        employeeIds: schedule.employeeIds || [],
       });
-      
+
+      // Set selected employees
+      if (schedule.employeeIds && schedule.employeeIds.length > 0) {
+        const selected = employeeOptions.filter(option => 
+          schedule.employeeIds?.includes(option.value)
+        );
+        setSelectedEmployees(selected);
+      }
+
       return schedule;
     },
-    enabled: isEditMode,
+    enabled: isEditMode && employeeOptions.length > 0,
   });
 
   const onSubmit = async (data: ScheduleFormValues) => {
     try {
       const scheduleData = {
-        ...data,
+        date: data.date,
+        startTime: data.startTime,
+        exitTime: data.exitTime,
         totalHours: Number(data.totalHours),
-        deductHours: Number(data.deductHours),
+        deductedHours: Number(data.deductedHours),
+        employeeIds: selectedEmployees.map(emp => emp.value),
       };
-      
+
       if (isEditMode) {
         await scheduleApi.update(Number(id), scheduleData);
         toast.success("Horario actualizado con éxito");
@@ -89,15 +124,15 @@ const ScheduleForm = () => {
   // Calculate end time based on start time and total hours
   const calculateEndTime = (startTime: string, hours: string) => {
     if (!startTime || !hours || isNaN(Number(hours))) return "";
-    
+
     const [startHour, startMinute] = startTime.split(":").map(Number);
     let endHour = startHour + Number(hours);
     const endMinute = startMinute;
-    
+
     if (endHour >= 24) {
       endHour = endHour % 24;
     }
-    
+
     return `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`;
   };
 
@@ -116,18 +151,18 @@ const ScheduleForm = () => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="name"
+                name="date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nombre del horario</FormLabel>
+                    <FormLabel>Fecha del horario</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: Turno matutino" {...field} />
+                      <Input type="date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -142,20 +177,22 @@ const ScheduleForm = () => {
                     </FormItem>
                   )}
                 />
-                
-                <FormItem>
-                  <FormLabel>Hora de fin (calculada)</FormLabel>
-                  <Input
-                    type="time"
-                    value={endTime}
-                    disabled
-                  />
-                  <FormDescription>
-                    Calculada automáticamente basada en la hora de inicio y horas totales
-                  </FormDescription>
-                </FormItem>
+
+                <FormField
+                  control={form.control}
+                  name="exitTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hora de fin</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -170,10 +207,10 @@ const ScheduleForm = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
-                  name="deductHours"
+                  name="deductedHours"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Horas a deducir</FormLabel>
@@ -188,7 +225,29 @@ const ScheduleForm = () => {
                   )}
                 />
               </div>
-              
+
+              <FormField
+                control={form.control}
+                name="employeeIds"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Asignar Empleados</FormLabel>
+                    <FormControl>
+                      <MultiSelect
+                        options={employeeOptions}
+                        selected={selectedEmployees}
+                        onChange={setSelectedEmployees}
+                        placeholder="Seleccionar empleados..."
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Seleccione los empleados que serán asignados a este horario
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <div className="flex justify-end space-x-4">
                 <Button
                   type="button"

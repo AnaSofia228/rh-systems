@@ -14,6 +14,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/position")
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class PositionController {
 
     private final PositionService positionService;

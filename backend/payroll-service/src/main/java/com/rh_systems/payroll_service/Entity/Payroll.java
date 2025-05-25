@@ -14,10 +14,12 @@ public class Payroll {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "paymentDate")
-    private Date paymentDate;
+    @Column(name = "issueDate")
+    private Date issueDate;
 
-    private float amount;
+    private float baseSalary;
+    private float totalAdjustments;
+    private float netSalary;
     private String status;
     private Long employeeId;
 
@@ -30,16 +32,20 @@ public class Payroll {
     /**
      * Constructor with all fields.
      *
-     * @param id          the ID
-     * @param paymentDate the payment date
-     * @param amount      the amount
-     * @param status      the status
-     * @param employeeId  the employee ID
+     * @param id               the ID
+     * @param issueDate        the issue date
+     * @param baseSalary       the base salary
+     * @param totalAdjustments the total adjustments
+     * @param netSalary        the net salary
+     * @param status           the status
+     * @param employeeId       the employee ID
      */
-    public Payroll(Long id, Date paymentDate, float amount, String status, Long employeeId) {
+    public Payroll(Long id, Date issueDate, float baseSalary, float totalAdjustments, float netSalary, String status, Long employeeId) {
         this.id = id;
-        this.paymentDate = paymentDate;
-        this.amount = amount;
+        this.issueDate = issueDate;
+        this.baseSalary = baseSalary;
+        this.totalAdjustments = totalAdjustments;
+        this.netSalary = netSalary;
         this.status = status;
         this.employeeId = employeeId;
     }
@@ -79,35 +85,67 @@ public class Payroll {
     }
 
     /**
-     * Gets the payment date.
-     * @return the payment date
+     * Gets the issue date.
+     * @return the issue date
      */
-    public Date getPaymentDate() {
-        return paymentDate;
+    public Date getIssueDate() {
+        return issueDate;
     }
 
     /**
-     * Sets the payment date.
-     * @param paymentDate the payment date to set
+     * Sets the issue date.
+     * @param issueDate the issue date to set
      */
-    public void setPaymentDate(Date paymentDate) {
-        this.paymentDate = paymentDate;
+    public void setIssueDate(Date issueDate) {
+        this.issueDate = issueDate;
     }
 
     /**
-     * Gets the amount.
-     * @return the amount
+     * Gets the base salary.
+     * @return the base salary
      */
-    public float getAmount() {
-        return amount;
+    public float getBaseSalary() {
+        return baseSalary;
     }
 
     /**
-     * Sets the amount.
-     * @param amount the amount to set
+     * Sets the base salary.
+     * @param baseSalary the base salary to set
      */
-    public void setAmount(float amount) {
-        this.amount = amount;
+    public void setBaseSalary(float baseSalary) {
+        this.baseSalary = baseSalary;
+    }
+
+    /**
+     * Gets the total adjustments.
+     * @return the total adjustments
+     */
+    public float getTotalAdjustments() {
+        return totalAdjustments;
+    }
+
+    /**
+     * Sets the total adjustments.
+     * @param totalAdjustments the total adjustments to set
+     */
+    public void setTotalAdjustments(float totalAdjustments) {
+        this.totalAdjustments = totalAdjustments;
+    }
+
+    /**
+     * Gets the net salary.
+     * @return the net salary
+     */
+    public float getNetSalary() {
+        return netSalary;
+    }
+
+    /**
+     * Sets the net salary.
+     * @param netSalary the net salary to set
+     */
+    public void setNetSalary(float netSalary) {
+        this.netSalary = netSalary;
     }
 
     /**

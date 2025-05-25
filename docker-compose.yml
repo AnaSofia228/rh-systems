@@ -26,7 +26,7 @@ services:
     ports:
       - "3000:80"
     environment:
-      - REACT_APP_API_URL=http://backend-gateway:8080 # Cambia según tu API Gateway
+      - REACT_APP_API_URL=http://nginx-proxy:80 # Nginx actúa como API Gateway
     depends_on:
       - employee-db
       - payroll-db
@@ -75,7 +75,7 @@ services:
       dockerfile: Dockerfile
     container_name: performance-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://payroll-db:5432/performance_db
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://performance-db:5432/performance_db
       - SPRING_DATASOURCE_USERNAME=performance_user
       - SPRING_DATASOURCE_PASSWORD=performance_pass
     ports:
@@ -92,7 +92,7 @@ services:
       dockerfile: Dockerfile
     container_name: schedule-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://payroll-db:5432/schedule_db
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://schedule-db:5432/schedule_db
       - SPRING_DATASOURCE_USERNAME=schedule_user
       - SPRING_DATASOURCE_PASSWORD=schedule_pass
     ports:

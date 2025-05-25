@@ -56,6 +56,8 @@ public class InitialDataLoader implements CommandLineRunner {
             admin.setPassword(passwordEncoder.encode("admin12345"));
             admin.setPosition(adminPosition);
             employeeRepository.save(admin);
+        }else{
+            System.out.println("Admin already exists");
         }
 
         // Create basic user if it doesn't exist
@@ -70,6 +72,8 @@ public class InitialDataLoader implements CommandLineRunner {
             user.setPassword(passwordEncoder.encode("user12345"));
             user.setPosition(userPosition);
             employeeRepository.save(user);
+        }else{
+            System.out.println("User already exists");
         }
     }
 }

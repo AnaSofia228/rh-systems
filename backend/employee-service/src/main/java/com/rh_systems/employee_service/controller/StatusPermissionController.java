@@ -11,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/status-permissions")
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class StatusPermissionController {
 
     private final StatusPermissionService statusPermissionService;

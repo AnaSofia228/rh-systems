@@ -2,6 +2,7 @@ package com.rh_systems.schedule_service.dto;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 import jakarta.validation.constraints.*;
 
@@ -42,6 +43,11 @@ public class ScheduleDTO {
     @PositiveOrZero(message = "Deducted hours must be zero or positive")
     @Max(value = 24, message = "Deducted hours cannot exceed 24")
     private Float deductedHours; 
+
+    /**
+     * The list of employee IDs associated with this schedule.
+     */
+    private List<Long> employeeIds;
 
 
     /**
@@ -122,5 +128,21 @@ public class ScheduleDTO {
      */
     public void setDeductedHours(Float deductedHours) {
         this.deductedHours = deductedHours;
+    }
+
+    /**
+     * Gets the employee IDs.
+     * @return the list of employee IDs
+     */
+    public List<Long> getEmployeeIds() {
+        return employeeIds;
+    }
+
+    /**
+     * Sets the employee IDs.
+     * @param employeeIds the list of employee IDs to set
+     */
+    public void setEmployeeIds(List<Long> employeeIds) {
+        this.employeeIds = employeeIds;
     }
 }

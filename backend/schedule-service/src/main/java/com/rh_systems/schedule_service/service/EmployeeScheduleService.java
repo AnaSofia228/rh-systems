@@ -66,6 +66,7 @@ public class EmployeeScheduleService {
         if (/*employee.isPresent() &&*/ schedule.isPresent()) {
             EmployeeSchedule employeeSchedule = new EmployeeSchedule();
             // employeeSchedule.setEmployee(employee.get());
+            employeeSchedule.setEmployeeId(employeeScheduleDTO.getEmployeeId());
             employeeSchedule.setSchedule(schedule.get());
             EmployeeScheduleDTOGetPostPut createdEmployeeScheduleDTO = new EmployeeScheduleDTOGetPostPut();
             createdEmployeeScheduleDTO.convertToEmployeeScheduleDTO(employeeScheduleRepository.save(employeeSchedule));

@@ -1,14 +1,14 @@
 package com.rh_systems.payroll_service.dto;
 
+import com.rh_systems.payroll_service.Entity.PayrollAdjustments.AdjustmentType;
 import jakarta.validation.constraints.*;
 
 /**
  * Data Transfer Object for payroll adjustments.
  */
 public class PayrollAdjustmentsDTO {
-    @NotBlank(message = "Payrrol adjustment cannot be blank")
-    @Size(max = 50, message = "Payroll adjustment type cannot exceed 50 characters")
-    private String type;
+    @NotNull(message = "Payroll adjustment type cannot be null")
+    private AdjustmentType type;
 
     @Size(max = 255, message = "Payroll adjustment description cannot exceed 255 characters")
     private String description;
@@ -24,7 +24,7 @@ public class PayrollAdjustmentsDTO {
      * Gets the type.
      * @return the type
      */
-    public String getType() {
+    public AdjustmentType getType() {
         return type;
     }
 
@@ -32,7 +32,7 @@ public class PayrollAdjustmentsDTO {
      * Sets the type.
      * @param type the type to set
      */
-    public void setType(String type) {
+    public void setType(AdjustmentType type) {
         this.type = type;
     }
 

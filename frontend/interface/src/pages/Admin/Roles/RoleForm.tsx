@@ -12,18 +12,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "@/components/ui/sonner";
-import { roleApi } from "@/utils/api";
+import { positionApi } from "@/utils/api";
 
 // Schema for form validation
-const roleSchema = z.object({
-  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  description: z.string().min(5, "La descripción debe tener al menos 5 caracteres"),
+const positionSchema = z.object({
+  name: z.string()
+    .min(3, "El nombre debe tener al menos 3 caracteres")
+    .max(8, "El nombre no debe exceder 8 caracteres"),
+  description: z.string()
+    .min(2, "La descripción debe tener al menos 2 caracteres")
+    .max(250, "La descripción no debe exceder 250 caracteres"),
   salary: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
     message: "El salario debe ser un número positivo",
   }),
 });
 
-type RoleFormValues = z.infer<typeof roleSchema>;
+type PositionFormValues = z.infer<typeof positionSchema>;
 
 const RoleForm = () => {
   const { id } = useParams();
@@ -31,8 +35,8 @@ const RoleForm = () => {
   const navigate = useNavigate();
 
   // Form initialization
-  const form = useForm<RoleFormValues>({
-    resolver: zodResolver(roleSchema),
+  const form = useForm<PositionFormValues>({
+    resolver: zodResolver(positionSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -40,44 +44,46 @@ const RoleForm = () => {
     },
   });
 
-  // Fetch role if in edit mode
+  // Fetch position if in edit mode
   useQuery({
-    queryKey: ["role", id],
+    queryKey: ["position", id],
     queryFn: async () => {
       if (!isEditMode) return null;
-      const response = await roleApi.getById(Number(id));
-      const role = response.data;
-      
+      const response = await positionApi.getById(Number(id));
+      const position = response.data;
+
       // Populate the form
       form.reset({
-        name: role.name,
-        description: role.description,
-        salary: String(role.salary),
+        name: position.name,
+        description: position.description,
+        salary: String(position.salary),
       });
-      
-      return role;
+
+      return position;
     },
     enabled: isEditMode,
   });
 
-  const onSubmit = async (data: RoleFormValues) => {
+  const onSubmit = async (data: PositionFormValues) => {
     try {
-      const roleData = {
+      const positionData = {
         ...data,
         salary: Number(data.salary),
       };
-      
+
       if (isEditMode) {
-        await roleApi.update(Number(id), roleData);
+        await positionApi.update(Number(id), positionData);
         toast.success("Cargo actualizado con éxito");
       } else {
-        await roleApi.create(roleData);
+        await positionApi.create(positionData);
         toast.success("Cargo creado con éxito");
       }
       navigate("/admin/roles");
     } catch (error) {
-      toast.error("Error al guardar el cargo");
-      console.error("Error saving role:", error);
+      toast.error("Error al guardar el cargo", {
+        description: error instanceof Error ? error.message : "Ocurrió un error inesperado"
+      });
+      console.error("Error saving position:", error);
     }
   };
 
@@ -103,7 +109,7 @@ const RoleForm = () => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="salary"
@@ -117,7 +123,7 @@ const RoleForm = () => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="description"
@@ -135,7 +141,7 @@ const RoleForm = () => {
                   </FormItem>
                 )}
               />
-              
+
               <div className="flex justify-end space-x-4">
                 <Button
                   type="button"

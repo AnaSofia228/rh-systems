@@ -1,19 +1,23 @@
-
 import axios from "axios";
 import { toast } from "@/components/ui/sonner";
 
-// Base API URL - would come from environment variables in a real app
-const API_URL = "https://api.workwise-enterprise.com/api/v1";
+// URLs por microservicio (definidas en base al `docker-compose.yml`)
+// Cambia a tu dominio/puerto apropiado en producción si necesitas usar un Gateway.
+const BASE_URLS = {
+  EMPLOYEE: "http://localhost:8005",
+  PAYROLL: "http://localhost:8006",
+  PERFORMANCE: "http://localhost:8007",
+  SCHEDULE: "http://localhost:8008",
+};
 
-// Create axios instance with default config
+// Crear una instancia de Axios con configuración predeterminada
 const api = axios.create({
-  baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Add request interceptor to include auth token in requests
+// Interceptores de solicitud: Agregar token de autorización
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -27,117 +31,238 @@ api.interceptors.request.use(
   }
 );
 
-// Add response interceptor to handle common errors
+// Interceptores de respuesta: Manejo de errores
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const { response } = error;
-    
+
     if (response) {
-      // Handle different HTTP status codes
       switch (response.status) {
         case 401:
-          toast.error("Authentication error", {
-            description: "Your session has expired. Please log in again."
+          toast.error("Error de autenticación", {
+            description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente."
           });
           localStorage.removeItem("token");
           localStorage.removeItem("user");
-          window.location.href = "/";
+          window.location.href = "/login";
           break;
         case 403:
-          toast.error("Access denied", {
-            description: "You don't have permission to perform this action."
+          toast.error("Acceso denegado", {
+            description: "No tienes permisos para realizar esta acción."
           });
           break;
         case 500:
-          toast.error("Server error", {
-            description: "Something went wrong. Please try again later."
+          toast.error("Error del servidor", {
+            description: "Ocurrió un problema interno. Intenta nuevamente más tarde."
           });
           break;
         default:
-          toast.error("Request failed", {
-            description: response.data?.message || "An error occurred"
+          toast.error("Error en la solicitud", {
+            description: response.data?.message || "Ocurrió un error."
           });
       }
     } else {
-      toast.error("Network error", {
-        description: "Unable to connect to the server. Please check your internet connection."
+      toast.error("Error de red", {
+        description: "No fue posible conectar con el servidor. Verifica tu conexión."
       });
     }
-    
+
     return Promise.reject(error);
   }
 );
 
-// API service functions
+// Funciones de servicios API para cada microservicio
 
-// Employee API
+// Auth API
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+interface JwtResponse {
+  token: string;
+  type: string;
+  id: string;
+  username: string;
+}
+
+export const authApi = {
+  login: (credentials: LoginCredentials) => 
+    api.post<JwtResponse>(`${BASE_URLS.EMPLOYEE}/api/auth/login`, credentials),
+};
+
+// Employee API 
+interface Employee {
+  id?: number;
+  dni: string;
+  name: string;
+  lastName: string;
+  address: string;
+  email: string;
+  phone: string;
+  password: string;
+  company: string;
+  positionId: number;
+}
+
 export const employeeApi = {
-  getAll: () => api.get("/employees"),
-  getById: (id: number) => api.get(`/employees/${id}`),
-  create: (employee: any) => api.post("/employees", employee),
-  update: (id: number, employee: any) => api.put(`/employees/${id}`, employee),
-  delete: (id: number) => api.delete(`/employees/${id}`),
-  getProfile: () => api.get("/employees/profile"),
+  getAll: () => api.get<Employee[]>(`${BASE_URLS.EMPLOYEE}/api/employee`),
+  getById: (id: number) => api.get<Employee>(`${BASE_URLS.EMPLOYEE}/api/employee/${id}`),
+  getByEmail: (email: string) => api.get<Employee>(`${BASE_URLS.EMPLOYEE}/api/employee/email/${email}`),
+  create: (employee: Employee) => api.post<Employee>(`${BASE_URLS.EMPLOYEE}/api/employee`, employee),
+  update: (id: number, employee: Partial<Employee>) =>
+      api.put<Employee>(`${BASE_URLS.EMPLOYEE}/api/employee/${id}`, employee),
+  delete: (id: number) => api.delete(`${BASE_URLS.EMPLOYEE}/api/employee/${id}`),
 };
 
-// Role (Position) API
-export const roleApi = {
-  getAll: () => api.get("/roles"),
-  getById: (id: number) => api.get(`/roles/${id}`),
-  create: (role: any) => api.post("/roles", role),
-  update: (id: number, role: any) => api.put(`/roles/${id}`, role),
-  delete: (id: number) => api.delete(`/roles/${id}`),
+// Position API
+interface Position {
+  id?: number;
+  name: string;
+  description: string;
+  salary: number;
+}
+
+export const positionApi = {
+  getAll: () => api.get<Position[]>(`${BASE_URLS.EMPLOYEE}/api/position`),
+  getById: (id: number) => api.get<Position>(`${BASE_URLS.EMPLOYEE}/api/position/${id}`),
+  getByName: (name: string) => api.get<Position>(`${BASE_URLS.EMPLOYEE}/api/position/name/${name}`),
+  create: (position: Position) => api.post<Position>(`${BASE_URLS.EMPLOYEE}/api/position`, position),
+  update: (id: number, position: Partial<Position>) =>
+      api.put<Position>(`${BASE_URLS.EMPLOYEE}/api/position/${id}`, position),
+  delete: (id: number) => api.delete(`${BASE_URLS.EMPLOYEE}/api/position/${id}`),
 };
 
-// Schedule API
-export const scheduleApi = {
-  getAll: () => api.get("/schedules"),
-  getById: (id: number) => api.get(`/schedules/${id}`),
-  create: (schedule: any) => api.post("/schedules", schedule),
-  update: (id: number, schedule: any) => api.put(`/schedules/${id}`, schedule),
-  delete: (id: number) => api.delete(`/schedules/${id}`),
-  assignToEmployee: (scheduleId: number, employeeId: number) => 
-    api.post(`/schedules/${scheduleId}/assign`, { employeeId }),
-  getByEmployee: (employeeId: number) => 
-    api.get(`/employees/${employeeId}/schedules`),
-  getMySchedules: () => api.get("/employees/me/schedules"),
-};
+// Status API
+interface Status {
+  id?: number;
+  type: string;
+  startDate: Date;
+  endDate: Date;
+  paid: number;
+  description: string;
+  employeeId: number;
+  statusPermissionId: number;
+}
 
-// Evaluation API
-export const evaluationApi = {
-  getAll: () => api.get("/evaluations"),
-  getById: (id: number) => api.get(`/evaluations/${id}`),
-  create: (evaluation: any) => api.post("/evaluations", evaluation),
-  update: (id: number, evaluation: any) => api.put(`/evaluations/${id}`, evaluation),
-  delete: (id: number) => api.delete(`/evaluations/${id}`),
-  getByEmployee: (employeeId: number) => 
-    api.get(`/employees/${employeeId}/evaluations`),
-  getMyEvaluations: () => api.get("/employees/me/evaluations"),
+export const statusApi = {
+  getAll: () => api.get<Status[]>(`${BASE_URLS.EMPLOYEE}/api/status`),
+  getById: (id: number) => api.get<Status>(`${BASE_URLS.EMPLOYEE}/api/status/${id}`),
+  create: (status: Status) => api.post<Status>(`${BASE_URLS.EMPLOYEE}/api/status`, status),
+  update: (id: number, status: Partial<Status>) =>
+      api.put<Status>(`${BASE_URLS.EMPLOYEE}/api/status/${id}`, status),
+  delete: (id: number) => api.delete(`${BASE_URLS.EMPLOYEE}/api/status/${id}`),
 };
 
 // Payroll API
+interface Payroll {
+  id: number;
+  employeeId: number;
+  amount: number;
+  date: string;
+}
+
+interface PayrollAdjustment {
+  id?: number;
+  amount: number;
+  reason: string;
+}
+
 export const payrollApi = {
-  getAll: () => api.get("/payrolls"),
-  getById: (id: number) => api.get(`/payrolls/${id}`),
-  getByEmployee: (employeeId: number) => 
-    api.get(`/employees/${employeeId}/payrolls`),
-  getMyPayrolls: () => api.get("/employees/me/payrolls"),
-  addAdjustment: (payrollId: number, adjustment: any) => 
-    api.post(`/payrolls/${payrollId}/adjustments`, adjustment),
-  removeAdjustment: (payrollId: number, adjustmentId: number) => 
-    api.delete(`/payrolls/${payrollId}/adjustments/${adjustmentId}`),
+  getAll: () => api.get<Payroll[]>(`${BASE_URLS.PAYROLL}/api/payrolls`),
+  getById: (id: number) => api.get<Payroll>(`${BASE_URLS.PAYROLL}/api/payrolls/${id}`),
+  getByEmployee: (employeeId: number) =>
+      api.get<Payroll[]>(`${BASE_URLS.PAYROLL}/api/employees/${employeeId}/payrolls`),
+  createAdjustment: (payrollId: number, adjustment: PayrollAdjustment) =>
+      api.post<PayrollAdjustment>(`${BASE_URLS.PAYROLL}/api/payrolls/${payrollId}/adjustments`, adjustment),
+  deleteAdjustment: (payrollId: number, adjustmentId: number) =>
+      api.delete(`${BASE_URLS.PAYROLL}/api/payrolls/${payrollId}/adjustments/${adjustmentId}`),
 };
 
-// Permission Request API
-export const permissionApi = {
-  getAll: () => api.get("/permissions"),
-  getById: (id: number) => api.get(`/permissions/${id}`),
-  create: (permission: any) => api.post("/permissions", permission),
-  update: (id: number, permission: any) => api.put(`/permissions/${id}`, permission),
-  approve: (id: number) => api.put(`/permissions/${id}/approve`),
-  reject: (id: number) => api.put(`/permissions/${id}/reject`),
-  getMyPermissions: () => api.get("/employees/me/permissions"),
+// Performance API
+interface Evaluation {
+  id?: number;
+  employeeId: number;
+  score: number;
+  comments: string;
+  date: string;
+}
+
+export const performanceApi = {
+  getAll: () => api.get<Evaluation[]>(`${BASE_URLS.PERFORMANCE}/evaluations`),
+  getById: (id: number) => api.get<Evaluation>(`${BASE_URLS.PERFORMANCE}/evaluations/${id}`),
+  create: (evaluation: Omit<Evaluation, 'id'>) =>
+      api.post<Evaluation>(`${BASE_URLS.PERFORMANCE}/evaluations`, evaluation),
+  update: (id: number, evaluation: Partial<Omit<Evaluation, 'id'>>) =>
+      api.put<Evaluation>(`${BASE_URLS.PERFORMANCE}/evaluations/${id}`, evaluation),
+  delete: (id: number) => api.delete(`${BASE_URLS.PERFORMANCE}/evaluations/${id}`),
+  getByEmployee: (employeeId: number) =>
+      api.get<Evaluation[]>(`${BASE_URLS.PERFORMANCE}/evaluations/employee/${employeeId}`),
+};
+
+// Schedule API
+interface Schedule {
+  id?: number;
+  date: string;
+  startTime: string;
+  exitTime: string;
+  totalHours: number;
+  deductedHours: number;
+  employeeIds?: number[];
+}
+
+interface EmployeeSchedule {
+  id?: number;
+  employeeId: number;
+  scheduleId: number;
+}
+
+interface CountEmployeeSchedule {
+  id?: number;
+  employeeScheduleId: number;
+  workDate: string;
+  workHours: number;
+}
+
+export const scheduleApi = {
+  // Schedule endpoints
+  getAll: () => api.get<Schedule[]>(`${BASE_URLS.SCHEDULE}/api/schedules`),
+  getById: (id: number) => api.get<Schedule>(`${BASE_URLS.SCHEDULE}/api/schedules/${id}`),
+  getByDate: (date: string) => api.get<Schedule>(`${BASE_URLS.SCHEDULE}/api/schedules/date/${date}`),
+  create: (schedule: Omit<Schedule, 'id'>) =>
+      api.post<Schedule>(`${BASE_URLS.SCHEDULE}/api/schedules`, schedule),
+  createSimple: (schedule: Omit<Schedule, 'id'>) =>
+      api.post<Schedule>(`${BASE_URLS.SCHEDULE}/api/schedules/simple`, schedule),
+  update: (id: number, schedule: Partial<Omit<Schedule, 'id'>>) =>
+      api.put<Schedule>(`${BASE_URLS.SCHEDULE}/api/schedules/${id}`, schedule),
+  delete: (id: number) => api.delete(`${BASE_URLS.SCHEDULE}/api/schedules/${id}`),
+
+  // Employee Schedule endpoints
+  getAllEmployeeSchedules: () => 
+      api.get<EmployeeSchedule[]>(`${BASE_URLS.SCHEDULE}/api/employee-schedule`),
+  getEmployeeScheduleById: (id: number) => 
+      api.get<EmployeeSchedule>(`${BASE_URLS.SCHEDULE}/api/employee-schedule/${id}`),
+  getEmployeeScheduleByEmployeeAndSchedule: (employeeId: number, scheduleId: number) => 
+      api.get<EmployeeSchedule>(`${BASE_URLS.SCHEDULE}/api/employee-schedule/employee/${employeeId}/schedule/${scheduleId}`),
+  createEmployeeSchedule: (employeeSchedule: Omit<EmployeeSchedule, 'id'>) => 
+      api.post<EmployeeSchedule>(`${BASE_URLS.SCHEDULE}/api/employee-schedule/new-employee-schedule`, employeeSchedule),
+  deleteEmployeeSchedule: (id: number) => 
+      api.delete(`${BASE_URLS.SCHEDULE}/api/employee-schedule/${id}`),
+
+  // Count Employee Schedule endpoints (time tracking)
+  getAllCountEmployeeSchedules: () => 
+      api.get<CountEmployeeSchedule[]>(`${BASE_URLS.SCHEDULE}/api/count-schedule`),
+  getCountEmployeeScheduleById: (id: number) => 
+      api.get<CountEmployeeSchedule>(`${BASE_URLS.SCHEDULE}/api/count-schedule/${id}`),
+  createCountEmployeeSchedule: (countEmployeeSchedule: Omit<CountEmployeeSchedule, 'id'>) => 
+      api.post<CountEmployeeSchedule>(`${BASE_URLS.SCHEDULE}/api/count-schedule`, countEmployeeSchedule),
+  updateCountEmployeeSchedule: (id: number, countEmployeeSchedule: Partial<Omit<CountEmployeeSchedule, 'id'>>) => 
+      api.put<CountEmployeeSchedule>(`${BASE_URLS.SCHEDULE}/api/count-schedule/${id}`, countEmployeeSchedule),
+  deleteCountEmployeeSchedule: (id: number) => 
+      api.delete(`${BASE_URLS.SCHEDULE}/api/count-schedule/${id}`),
+  registerHours: (employeeId: number, hours: number) => 
+      api.post<void>(`${BASE_URLS.SCHEDULE}/api/count-schedule/${employeeId}?hours=${hours}`),
 };
 
 export default api;

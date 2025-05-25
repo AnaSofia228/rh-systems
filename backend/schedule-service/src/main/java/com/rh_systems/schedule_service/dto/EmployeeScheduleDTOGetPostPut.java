@@ -61,7 +61,7 @@ public class EmployeeScheduleDTOGetPostPut {
      */
     public void convertToEmployeeScheduleDTO(EmployeeSchedule employeeScheduleEntity) {
         this.setId(employeeScheduleEntity.getId());
-        // this.setEmployeeId(employeeScheduleEntity.getEmployee().getId());
+        this.setEmployeeId(employeeScheduleEntity.getEmployeeId());
         this.setScheduleId(employeeScheduleEntity.getSchedule().getId());
     }
 }

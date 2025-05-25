@@ -9,14 +9,19 @@ import org.springframework.stereotype.Service;
 
 import com.rh_systems.payroll_service.Entity.Payroll;
 import com.rh_systems.payroll_service.Entity.PayrollAdjustments;
+import com.rh_systems.payroll_service.Entity.PayrollAdjustments.AdjustmentType;
 import com.rh_systems.payroll_service.dto.PayrollAdjustmentsDTO;
 import com.rh_systems.payroll_service.dto.PayrollAdjustmentsDTOGetPostPut;
 import com.rh_systems.payroll_service.repository.PayrollAdjustmentsRepository;
+import com.rh_systems.payroll_service.repository.PayrollRepository;
 
 @Service
 public class PayrollAdjustmentsService {
     @Autowired
     private PayrollAdjustmentsRepository payrollAdjustmentsRepository;
+
+    @Autowired
+    private PayrollRepository payrollRepository;
 
     /**
      * Gets all payroll adjustments.
@@ -53,8 +58,8 @@ public class PayrollAdjustmentsService {
      * @param type the payroll adjustment type
      * @return an Optional containing the PayrollAdjustmentsDTOGetPostPut if found, or empty otherwise
      */
-    public Optional<PayrollAdjustmentsDTOGetPostPut> getPayrollAdjustmentsByType(String type) {
-        Optional<PayrollAdjustments> payrollAdjustment = payrollAdjustmentsRepository.findByPayrollAdjustmentsType(type);
+    public Optional<PayrollAdjustmentsDTOGetPostPut> getPayrollAdjustmentsByType(AdjustmentType type) {
+        Optional<PayrollAdjustments> payrollAdjustment = payrollAdjustmentsRepository.findByType(type);
         if (payrollAdjustment.isPresent()) {
             PayrollAdjustmentsDTOGetPostPut payrollAdjustmentDTO = new PayrollAdjustmentsDTOGetPostPut();
             payrollAdjustmentDTO.convertToPayrollAdjustmentDTO(payrollAdjustment.get());
@@ -69,16 +74,37 @@ public class PayrollAdjustmentsService {
      * @return an Optional containing the created PayrollAdjustmentsDTOGetPostPut, or empty if a payroll adjustment with the same type exists
      */
     public Optional<PayrollAdjustmentsDTOGetPostPut> createPayrollAdjustments(PayrollAdjustmentsDTO payrollAdjustmentDTO) {
-        if (payrollAdjustmentsRepository.findByPayrollAdjustmentsType(payrollAdjustmentDTO.getType()).isPresent()) {
+        if (payrollAdjustmentsRepository.findByType(payrollAdjustmentDTO.getType()).isPresent()) {
             return Optional.empty();
         }
+
+        // Get the payroll to update its totalAdjustments and netSalary
+        Optional<Payroll> payrollOpt = payrollRepository.findById(payrollAdjustmentDTO.getPayrollId());
+        if (!payrollOpt.isPresent()) {
+            return Optional.empty();
+        }
+
+        Payroll payroll = payrollOpt.get();
+        float adjustmentAmount = payrollAdjustmentDTO.getAmount();
+
+        // Calculate the adjustment based on type
+        if (payrollAdjustmentDTO.getType() == AdjustmentType.BONUS) {
+            payroll.setTotalAdjustments(payroll.getTotalAdjustments() + adjustmentAmount);
+        } else if (payrollAdjustmentDTO.getType() == AdjustmentType.DISCOUNT) {
+            payroll.setTotalAdjustments(payroll.getTotalAdjustments() - adjustmentAmount);
+        }
+
+        // Update net salary
+        payroll.setNetSalary(payroll.getBaseSalary() + payroll.getTotalAdjustments());
+        payrollRepository.save(payroll);
+
+        // Create the adjustment
         PayrollAdjustments payrollAdjustment = new PayrollAdjustments();
         payrollAdjustment.setType(payrollAdjustmentDTO.getType());
         payrollAdjustment.setDescription(payrollAdjustmentDTO.getDescription());
         payrollAdjustment.setAmount(payrollAdjustmentDTO.getAmount());
-        Payroll payroll = new Payroll();
-        payroll.setId(payrollAdjustmentDTO.getPayrollId());
         payrollAdjustment.setPayroll(payroll);
+
         PayrollAdjustmentsDTOGetPostPut savedPayrollAdjustment = new PayrollAdjustmentsDTOGetPostPut();
         savedPayrollAdjustment.convertToPayrollAdjustmentDTO(payrollAdjustmentsRepository.save(payrollAdjustment));
         return Optional.of(savedPayrollAdjustment);
@@ -93,18 +119,47 @@ public class PayrollAdjustmentsService {
     public Optional<PayrollAdjustmentsDTOGetPostPut> updatePayrollAdjustment(Long id, PayrollAdjustmentsDTO payrollAdjustmentDTO) {
         Optional<PayrollAdjustments> payrollAdjustment = payrollAdjustmentsRepository.findById(id);
         if (payrollAdjustment.isPresent()) {
-            if (!payrollAdjustment.get().getType().equalsIgnoreCase(payrollAdjustmentDTO.getType())) {
-                if (payrollAdjustmentsRepository.findByPayrollAdjustmentsType(payrollAdjustmentDTO.getType()).isPresent()) {
+            PayrollAdjustments payrollAdjustmentToUpdate = payrollAdjustment.get();
+
+            // Check if type is changing and if the new type already exists
+            if (payrollAdjustmentToUpdate.getType() != payrollAdjustmentDTO.getType()) {
+                if (payrollAdjustmentsRepository.findByType(payrollAdjustmentDTO.getType()).isPresent()) {
                     return Optional.empty();
                 }
             }
-            PayrollAdjustments payrollAdjustmentToUpdate = payrollAdjustment.get();
+
+            // Get the payroll to update its totalAdjustments and netSalary
+            Optional<Payroll> payrollOpt = payrollRepository.findById(payrollAdjustmentDTO.getPayrollId());
+            if (!payrollOpt.isPresent()) {
+                return Optional.empty();
+            }
+
+            Payroll payroll = payrollOpt.get();
+
+            // Reverse the effect of the old adjustment
+            if (payrollAdjustmentToUpdate.getType() == AdjustmentType.BONUS) {
+                payroll.setTotalAdjustments(payroll.getTotalAdjustments() - payrollAdjustmentToUpdate.getAmount());
+            } else if (payrollAdjustmentToUpdate.getType() == AdjustmentType.DISCOUNT) {
+                payroll.setTotalAdjustments(payroll.getTotalAdjustments() + payrollAdjustmentToUpdate.getAmount());
+            }
+
+            // Apply the new adjustment
+            if (payrollAdjustmentDTO.getType() == AdjustmentType.BONUS) {
+                payroll.setTotalAdjustments(payroll.getTotalAdjustments() + payrollAdjustmentDTO.getAmount());
+            } else if (payrollAdjustmentDTO.getType() == AdjustmentType.DISCOUNT) {
+                payroll.setTotalAdjustments(payroll.getTotalAdjustments() - payrollAdjustmentDTO.getAmount());
+            }
+
+            // Update net salary
+            payroll.setNetSalary(payroll.getBaseSalary() + payroll.getTotalAdjustments());
+            payrollRepository.save(payroll);
+
+            // Update the adjustment
             payrollAdjustmentToUpdate.setType(payrollAdjustmentDTO.getType());
             payrollAdjustmentToUpdate.setDescription(payrollAdjustmentDTO.getDescription());
             payrollAdjustmentToUpdate.setAmount(payrollAdjustmentDTO.getAmount());
-            Payroll payroll = new Payroll();
-            payroll.setId(payrollAdjustmentDTO.getPayrollId());
             payrollAdjustmentToUpdate.setPayroll(payroll);
+
             PayrollAdjustmentsDTOGetPostPut updatedPayrollAdjustmentDTO = new PayrollAdjustmentsDTOGetPostPut();
             updatedPayrollAdjustmentDTO.convertToPayrollAdjustmentDTO(payrollAdjustmentsRepository.save(payrollAdjustmentToUpdate));
             return Optional.of(updatedPayrollAdjustmentDTO);
@@ -118,7 +173,23 @@ public class PayrollAdjustmentsService {
      * @return true if the payroll adjustment was deleted, false otherwise
      */
     public boolean deletePayrollAdjustment(Long id) {
-        if (payrollAdjustmentsRepository.findById(id).isPresent()) {
+        Optional<PayrollAdjustments> payrollAdjustmentOpt = payrollAdjustmentsRepository.findById(id);
+        if (payrollAdjustmentOpt.isPresent()) {
+            PayrollAdjustments payrollAdjustment = payrollAdjustmentOpt.get();
+            Payroll payroll = payrollAdjustment.getPayroll();
+
+            // Reverse the effect of the adjustment on the payroll
+            if (payrollAdjustment.getType() == AdjustmentType.BONUS) {
+                payroll.setTotalAdjustments(payroll.getTotalAdjustments() - payrollAdjustment.getAmount());
+            } else if (payrollAdjustment.getType() == AdjustmentType.DISCOUNT) {
+                payroll.setTotalAdjustments(payroll.getTotalAdjustments() + payrollAdjustment.getAmount());
+            }
+
+            // Update net salary
+            payroll.setNetSalary(payroll.getBaseSalary() + payroll.getTotalAdjustments());
+            payrollRepository.save(payroll);
+
+            // Delete the adjustment
             payrollAdjustmentsRepository.deleteById(id);
             return true;
         }

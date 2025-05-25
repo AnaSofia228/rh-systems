@@ -1,5 +1,6 @@
 package com.rh_systems.schedule_service.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -12,11 +13,15 @@ import com.rh_systems.schedule_service.Entity.EmployeeSchedule;
 import com.rh_systems.schedule_service.dto.CountEmployeeScheduleDTO;
 import com.rh_systems.schedule_service.dto.CountEmployeeScheduleDTOGetPostPut;
 import com.rh_systems.schedule_service.repository.CountEmployeeScheduleRepository;
+import com.rh_systems.schedule_service.repository.EmployeeScheduleRepository;
 
 @Service
 public class CountEmployeeScheduleService {
     @Autowired
     private CountEmployeeScheduleRepository countEmployeeScheduleRepository;
+
+    @Autowired
+    private EmployeeScheduleRepository employeeScheduleRepository;
 
     /**
      * Gets all count employee schedules.
@@ -121,5 +126,40 @@ public class CountEmployeeScheduleService {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Registers work hours for an employee.
+     * If the employee already has a count, it adds the hours to the existing count,
+     * ensuring that the total doesn't exceed 8 hours.
+     * If the employee doesn't have a count, it creates a new one.
+     * 
+     * @param employeeId the employee ID
+     * @param hoursWorked the hours worked to register
+     */
+    public void registerWorkHours(Long employeeId, float hoursWorked) {
+        CountEmployeeSchedule count = countEmployeeScheduleRepository.findByEmployeeId(employeeId)
+            .orElse(new CountEmployeeSchedule());
+
+        if (count.getId() == null) {
+            // New count - need to set up the employee schedule relationship
+            List<EmployeeSchedule> employeeSchedules = employeeScheduleRepository.findByEmployeeId(employeeId);
+            if (!employeeSchedules.isEmpty()) {
+                // Use the first employee schedule found
+                count.setEmployeeSchedule(employeeSchedules.get(0));
+                count.setWorkDate(LocalDate.now());
+                count.setWorkHours(0f);
+            } else {
+                // Cannot register hours for an employee that doesn't have a schedule
+                return;
+            }
+        }
+
+        // Only add hours if current count is less than 8
+        if (count.getWorkHours() < 8f) {
+            float newHours = count.getWorkHours() + hoursWorked;
+            count.setWorkHours(Math.min(newHours, 8f));
+            countEmployeeScheduleRepository.save(count);
+        }
     }
 }

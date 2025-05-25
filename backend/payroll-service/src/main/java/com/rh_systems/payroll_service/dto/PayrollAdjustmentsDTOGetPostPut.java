@@ -98,7 +98,7 @@ public class PayrollAdjustmentsDTOGetPostPut {
      */
     public void convertToPayrollAdjustmentDTO(PayrollAdjustments payrollAdjustmentEntity) {
         this.setId(payrollAdjustmentEntity.getId());
-        this.setType(payrollAdjustmentEntity.getType());
+        this.setType(payrollAdjustmentEntity.getType().name());
         this.setDescription(payrollAdjustmentEntity.getDescription());
         this.setAmount(payrollAdjustmentEntity.getAmount());
         this.setPayrollId(payrollAdjustmentEntity.getPayroll().getId());

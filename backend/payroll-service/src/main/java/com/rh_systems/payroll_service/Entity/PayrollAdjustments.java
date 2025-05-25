@@ -12,9 +12,18 @@ public class PayrollAdjustments {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String type;
+    @Enumerated(EnumType.STRING)
+    private AdjustmentType type;
     private String description;
     private float amount;
+
+    /**
+     * Enum for adjustment types.
+     */
+    public enum AdjustmentType {
+        BONUS,
+        DISCOUNT
+    }
 
     @ManyToOne
     @JoinColumn(name = "id_payroll")
@@ -40,7 +49,7 @@ public class PayrollAdjustments {
      * Gets the type.
      * @return the type
      */
-    public String getType() {
+    public AdjustmentType getType() {
         return type;
     }
 
@@ -48,7 +57,7 @@ public class PayrollAdjustments {
      * Sets the type.
      * @param type the type to set
      */
-    public void setType(String type) {
+    public void setType(AdjustmentType type) {
         this.type = type;
     }
 

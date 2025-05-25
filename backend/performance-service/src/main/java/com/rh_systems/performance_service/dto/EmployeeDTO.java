@@ -36,6 +36,10 @@ public class EmployeeDTO {
     @Size(max = 100, message = "Position cannot exceed 100 characters")
     private String position;
 
+    @NotBlank(message = "Department cannot be blank")
+    @Size(max = 100, message = "Department cannot exceed 100 characters")
+    private String department;
+
     /**
      * Default constructor
      */
@@ -45,17 +49,18 @@ public class EmployeeDTO {
     /**
      * Constructor with parameters
      *
-     * @param id       Employee ID
-     * @param dni      DNI number
-     * @param name     First name
-     * @param lastName Last name
-     * @param email    Email address
-     * @param phone    Phone number
-     * @param address  Home address
-     * @param position Job position
+     * @param id         Employee ID
+     * @param dni        DNI number
+     * @param name       First name
+     * @param lastName   Last name
+     * @param email      Email address
+     * @param phone      Phone number
+     * @param address    Home address
+     * @param position   Job position
+     * @param department Department
      */
     public EmployeeDTO(Long id, String dni, String name, String lastName, String email,
-                       String phone, String address, String position) {
+                       String phone, String address, String position, String department) {
         this.id = id;
         this.dni = dni;
         this.name = name;
@@ -64,6 +69,7 @@ public class EmployeeDTO {
         this.phone = phone;
         this.address = address;
         this.position = position;
+        this.department = department;
     }
 
     /**
@@ -208,5 +214,23 @@ public class EmployeeDTO {
      */
     public void setPosition(String position) {
         this.position = position;
+    }
+
+    /**
+     * Gets the department
+     *
+     * @return Department
+     */
+    public String getDepartment() {
+        return department;
+    }
+
+    /**
+     * Sets the department
+     *
+     * @param department Department to set
+     */
+    public void setDepartment(String department) {
+        this.department = department;
     }
 }
