@@ -75,9 +75,11 @@ services:
       dockerfile: Dockerfile
     container_name: performance-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://performance-db:5432/performance_db
+      - DB_HOST=performance-db
+      - PERFORMANCE_SERVICE_DB_PORT=5432
       - SPRING_DATASOURCE_USERNAME=performance_user
       - SPRING_DATASOURCE_PASSWORD=performance_pass
+      - EMPLOYEE_SERVICE_URL=http://employee-service:8080
     ports:
       - "8007:8082"
     depends_on:

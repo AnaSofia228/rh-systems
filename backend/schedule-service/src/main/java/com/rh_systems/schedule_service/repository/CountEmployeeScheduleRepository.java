@@ -19,7 +19,7 @@ public interface CountEmployeeScheduleRepository extends JpaRepository<CountEmpl
      * @param workHours the work hours
      * @return an Optional containing the CountEmployeeSchedule if found, or empty otherwise
      */
-    Optional<CountEmployeeSchedule> findByCountEmployeeSchedule(Float workHours);
+    Optional<CountEmployeeSchedule> findByWorkHours(Float workHours);
 
     /**
      * Finds a CountEmployeeSchedule by employee ID.

@@ -41,7 +41,7 @@ public class PayrollService {
         if (employee == null || position == null) {
             return Optional.empty();
         }
-        if (payrollRepository.findByPayrollStatus(payrollDTO.getStatus()).isPresent()) {
+        if (payrollRepository.findByStatus(payrollDTO.getStatus()).isPresent()) {
             return Optional.empty();
         }
 
@@ -96,7 +96,7 @@ public class PayrollService {
      * @return an Optional containing the PayrollDTOGetPostPut if found, or empty otherwise
      */
     public Optional<PayrollDTOGetPostPut> getPayrollByStatus(String status) {
-        Optional<Payroll> payroll = payrollRepository.findByPayrollStatus(status);
+        Optional<Payroll> payroll = payrollRepository.findByStatus(status);
         if (payroll.isPresent()) {
             PayrollDTOGetPostPut payrollDTO = new PayrollDTOGetPostPut();
             payrollDTO.convertToPayrollDTO(payroll.get());
@@ -111,7 +111,7 @@ public class PayrollService {
      * @return an Optional containing the created PayrollDTOGetPostPut, or empty if a payroll with the same status exists
      */
     public Optional<PayrollDTOGetPostPut> createPayroll(PayrollDTO payrollDTO) {
-        if (payrollRepository.findByPayrollStatus(payrollDTO.getStatus()).isPresent()) {
+        if (payrollRepository.findByStatus(payrollDTO.getStatus()).isPresent()) {
             return Optional.empty();
         }
 
@@ -150,7 +150,7 @@ public class PayrollService {
         Optional<Payroll> payroll = payrollRepository.findById(id);
         if (payroll.isPresent()) {
             if (!payroll.get().getStatus().equalsIgnoreCase(payrollDTO.getStatus())) {
-                if (payrollRepository.findByPayrollStatus(payrollDTO.getStatus()).isPresent()) {
+                if (payrollRepository.findByStatus(payrollDTO.getStatus()).isPresent()) {
                     return Optional.empty();
                 }
             }

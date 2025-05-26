@@ -45,7 +45,7 @@ public class InitialDataLoader implements CommandLineRunner {
                 .orElseGet(() -> positionRepository.save(new Position(null, "ROLE_USER", "Basic user role", 2000000.0f, null)));
 
         // Create admin user if it doesn't exist
-        if (!employeeRepository.existsByName("admin")) {
+        if (!employeeRepository.existsByEmail("admin@noexiste12345")) {
             Employee admin = new Employee();
             admin.setDni("adminDRRL");
             admin.setName("AdminSofia");
@@ -57,11 +57,11 @@ public class InitialDataLoader implements CommandLineRunner {
             admin.setPosition(adminPosition);
             employeeRepository.save(admin);
         }else{
-            System.out.println("Admin already exists");
+            System.out.println("Admin with email admin@noexiste12345 already exists");
         }
 
         // Create basic user if it doesn't exist
-        if (!employeeRepository.existsByName("user")) {
+        if (!employeeRepository.existsByEmail("user@noexiste12345")) {
             Employee user = new Employee();
             user.setDni("userDRRM");
             user.setName("UserDaniel");
@@ -73,7 +73,7 @@ public class InitialDataLoader implements CommandLineRunner {
             user.setPosition(userPosition);
             employeeRepository.save(user);
         }else{
-            System.out.println("User already exists");
+            System.out.println("User with email user@noexiste12345 already exists");
         }
     }
 }

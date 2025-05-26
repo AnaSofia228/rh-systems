@@ -3,20 +3,21 @@ export const environment = {
     // Configuración para desarrollo local
     local: {
         employeeApi: 'http://localhost:8005',
-        payrollApi: 'http://localhost:9091',
-        performanceApi: 'http://localhost:9092',
-        scheduleApi: 'http://localhost:9093'
+        payrollApi: 'http://localhost:8006',
+        performanceApi: 'http://localhost:8007',
+        scheduleApi: 'http://localhost:8008'
     },
     // Configuración para producción (Docker)
     docker: {
-        employeeApi: 'http://employee-service:8080',
-        payrollApi: 'http://payroll-service:9091',
-        performanceApi: 'http://performance-service:9092',
-        scheduleApi: 'http://schedule-service:9093'
+        // Use NGINX as API gateway in production
+        employeeApi: '/api/employee',
+        payrollApi: '/api/payrolls',
+        performanceApi: '/evaluations',
+        scheduleApi: '/api/schedules'
     }
 } as const;
 
-const  currentMode = import.meta.env.MODE;
+const currentMode = import.meta.env.MODE;
 // Selección automática basada en el entorno
 export const apiConfig = currentMode === 'production'
     ? environment.docker

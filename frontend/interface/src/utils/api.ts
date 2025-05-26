@@ -1,13 +1,14 @@
 import axios from "axios";
 import { toast } from "@/components/ui/sonner";
 
-// URLs por microservicio (definidas en base al `docker-compose.yml`)
-// Cambia a tu dominio/puerto apropiado en producción si necesitas usar un Gateway.
+import { apiConfig } from "@/config/environment";
+
+// URLs por microservicio (obtenidas de la configuración de entorno)
 const BASE_URLS = {
-  EMPLOYEE: "http://localhost:8005",
-  PAYROLL: "http://localhost:8006",
-  PERFORMANCE: "http://localhost:8007",
-  SCHEDULE: "http://localhost:8008",
+  EMPLOYEE: apiConfig.employeeApi,
+  PAYROLL: apiConfig.payrollApi,
+  PERFORMANCE: apiConfig.performanceApi,
+  SCHEDULE: apiConfig.scheduleApi,
 };
 
 // Crear una instancia de Axios con configuración predeterminada
@@ -15,6 +16,7 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  timeout: 10000, // 10 segundos de timeout
 });
 
 // Interceptores de solicitud: Agregar token de autorización
@@ -35,37 +37,61 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const { response } = error;
+    console.error("API Error:", error);
 
-    if (response) {
-      switch (response.status) {
-        case 401:
-          toast.error("Error de autenticación", {
-            description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente."
-          });
+    // Check if the error is a network error (no response) or timeout
+    if (!error.response) {
+      console.error("Network Error - No response from server");
+
+      // Check if it's a timeout error
+      if (error.code === 'ECONNABORTED') {
+        toast.error("Tiempo de espera agotado", {
+          description: "La solicitud ha excedido el tiempo de espera. Verifica que los servicios backend estén en ejecución y respondan correctamente."
+        });
+      } else {
+        toast.error("Error de red", {
+          description: "No fue posible conectar con el servidor. Verifica que los servicios backend estén en ejecución."
+        });
+      }
+
+      // For login page, we don't want to redirect
+      if (window.location.pathname !== "/") {
+        // Redirect to login page after a delay to show the toast
+        setTimeout(() => {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
           window.location.href = "/";
-          break;
-        case 403:
-          toast.error("Acceso denegado", {
-            description: "No tienes permisos para realizar esta acción."
-          });
-          break;
-        case 500:
-          toast.error("Error del servidor", {
-            description: "Ocurrió un problema interno. Intenta nuevamente más tarde."
-          });
-          break;
-        default:
-          toast.error("Error en la solicitud", {
-            description: response.data?.message || "Ocurrió un error."
-          });
+        }, 3000);
       }
-    } else {
-      toast.error("Error de red", {
-        description: "No fue posible conectar con el servidor. Verifica tu conexión."
-      });
+
+      return Promise.reject(error);
+    }
+
+    const { response } = error;
+
+    switch (response.status) {
+      case 401:
+        toast.error("Error de autenticación", {
+          description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente."
+        });
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/";
+        break;
+      case 403:
+        toast.error("Acceso denegado", {
+          description: "No tienes permisos para realizar esta acción."
+        });
+        break;
+      case 500:
+        toast.error("Error del servidor", {
+          description: "Ocurrió un problema interno. Intenta nuevamente más tarde."
+        });
+        break;
+      default:
+        toast.error("Error en la solicitud", {
+          description: response.data?.message || "Ocurrió un error."
+        });
     }
 
     return Promise.reject(error);

@@ -14,9 +14,9 @@ import com.rh_systems.schedule_service.Entity.Schedule;
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     /**
-     * Finds a Schedule by its schedule date.
+     * Finds a Schedule by its date.
      * @param date the schedule date
      * @return an Optional containing the Schedule if found, or empty otherwise
      */
-    Optional<Schedule> findByScheduleDate(LocalDate date);
+    Optional<Schedule> findByDate(LocalDate date);
 }

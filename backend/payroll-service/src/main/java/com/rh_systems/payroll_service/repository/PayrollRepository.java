@@ -17,5 +17,5 @@ public interface PayrollRepository extends JpaRepository<Payroll, Long> {
      * @param status the payroll status
      * @return an Optional containing the Payroll if found, or empty otherwise
      */
-    Optional<Payroll> findByPayrollStatus(String status);
+    Optional<Payroll> findByStatus(String status);
 }

@@ -8,8 +8,9 @@ import jakarta.validation.constraints.*;
  * Data Transfer Object for performance evaluation.
  */
 public class PerformanceEvaluationDTO {
-    @NotBlank(message = "Score cannot be blank")
-    @Size(min = 1, max = 5, message = "Score must be between 1 and 5")
+    @NotNull(message = "Score cannot be null")
+    @Min(value = 1, message = "Score must be at least 1")
+    @Max(value = 5, message = "Score must be at most 5")
     private float score;
 
     @Size(max = 250, message = "Comments must be less than 250 characters")

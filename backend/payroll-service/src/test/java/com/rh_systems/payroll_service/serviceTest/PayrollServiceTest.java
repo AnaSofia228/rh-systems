@@ -71,7 +71,7 @@ public class PayrollServiceTest {
     void testCreatePayrollWithEmployeeValidation_Success() {
         // Arrange
         when(employeeClient.getEmployeeById(anyLong())).thenReturn(employeeDTO);
-        when(payrollRepository.findByPayrollStatus(anyString())).thenReturn(Optional.empty());
+        when(payrollRepository.findByStatus(anyString())).thenReturn(Optional.empty());
         when(payrollRepository.save(any(Payroll.class))).thenReturn(payroll);
 
         // Act
@@ -100,7 +100,7 @@ public class PayrollServiceTest {
     void testCreatePayrollWithEmployeeValidation_StatusConflict() {
         // Arrange
         when(employeeClient.getEmployeeById(anyLong())).thenReturn(employeeDTO);
-        when(payrollRepository.findByPayrollStatus(anyString())).thenReturn(Optional.of(payroll));
+        when(payrollRepository.findByStatus(anyString())).thenReturn(Optional.of(payroll));
 
         // Act
         Optional<PayrollDTOGetPostPut> result = payrollService.createPayrollWithEmployeeValidation(payrollDTO);
@@ -154,7 +154,7 @@ public class PayrollServiceTest {
     @Test
     void testGetPayrollByStatus_Found() {
         // Arrange
-        when(payrollRepository.findByPayrollStatus(anyString())).thenReturn(Optional.of(payroll));
+        when(payrollRepository.findByStatus(anyString())).thenReturn(Optional.of(payroll));
 
         // Act
         Optional<PayrollDTOGetPostPut> result = payrollService.getPayrollByStatus("PENDING");
@@ -168,7 +168,7 @@ public class PayrollServiceTest {
     @Test
     void testGetPayrollByStatus_NotFound() {
         // Arrange
-        when(payrollRepository.findByPayrollStatus(anyString())).thenReturn(Optional.empty());
+        when(payrollRepository.findByStatus(anyString())).thenReturn(Optional.empty());
 
         // Act
         Optional<PayrollDTOGetPostPut> result = payrollService.getPayrollByStatus("PENDING");
@@ -180,7 +180,7 @@ public class PayrollServiceTest {
     @Test
     void testCreatePayroll_Success() {
         // Arrange
-        when(payrollRepository.findByPayrollStatus(anyString())).thenReturn(Optional.empty());
+        when(payrollRepository.findByStatus(anyString())).thenReturn(Optional.empty());
         when(payrollRepository.save(any(Payroll.class))).thenReturn(payroll);
 
         // Act
@@ -195,7 +195,7 @@ public class PayrollServiceTest {
     @Test
     void testCreatePayroll_StatusConflict() {
         // Arrange
-        when(payrollRepository.findByPayrollStatus(anyString())).thenReturn(Optional.of(payroll));
+        when(payrollRepository.findByStatus(anyString())).thenReturn(Optional.of(payroll));
 
         // Act
         Optional<PayrollDTOGetPostPut> result = payrollService.createPayroll(payrollDTO);
@@ -243,7 +243,7 @@ public class PayrollServiceTest {
         conflictPayroll.setStatus("PENDING");
 
         when(payrollRepository.findById(anyLong())).thenReturn(Optional.of(existingPayroll));
-        when(payrollRepository.findByPayrollStatus(anyString())).thenReturn(Optional.of(conflictPayroll));
+        when(payrollRepository.findByStatus(anyString())).thenReturn(Optional.of(conflictPayroll));
 
         // Act
         Optional<PayrollDTOGetPostPut> result = payrollService.updatePayroll(1L, payrollDTO);

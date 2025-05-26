@@ -65,7 +65,7 @@ public class ScheduleService {
      * @return an Optional containing the ScheduleDTOGetPostPut if found, or empty otherwise
      */
     public Optional<ScheduleDTOGetPostPut> getScheduleByDate(LocalDate date) {
-        Optional<Schedule> schedule = scheduleRepository.findByScheduleDate(date);
+        Optional<Schedule> schedule = scheduleRepository.findByDate(date);
         if (schedule.isPresent()) {
             ScheduleDTOGetPostPut scheduleDTO = new ScheduleDTOGetPostPut();
             scheduleDTO.convertToScheduleDTO(schedule.get());
@@ -80,7 +80,7 @@ public class ScheduleService {
      * @return an Optional containing the created ScheduleDTOGetPostPut, or empty if a schedule with the same date exists
      */
     public Optional<ScheduleDTOGetPostPut> createSchedule(ScheduleDTO scheduleDTO) {
-        if (scheduleRepository.findByScheduleDate(scheduleDTO.getDate()).isPresent()) {
+        if (scheduleRepository.findByDate(scheduleDTO.getDate()).isPresent()) {
             return Optional.empty();
         }
         Schedule schedule = new Schedule();
@@ -104,7 +104,7 @@ public class ScheduleService {
         Optional<Schedule> schedule = scheduleRepository.findById(id);
         if (schedule.isPresent()) {
             if (!schedule.get().getDate().equals(scheduleDTO.getDate())) {
-                if (scheduleRepository.findByScheduleDate(scheduleDTO.getDate()).isPresent()) {
+                if (scheduleRepository.findByDate(scheduleDTO.getDate()).isPresent()) {
                     return Optional.empty();
                 }
             }
@@ -145,7 +145,7 @@ public class ScheduleService {
     @Transactional
     public Optional<ScheduleDTOGetPostPut> createScheduleWithEmployees(ScheduleDTO scheduleDTO) {
         // Check if a schedule with the same date already exists
-        if (scheduleRepository.findByScheduleDate(scheduleDTO.getDate()).isPresent()) {
+        if (scheduleRepository.findByDate(scheduleDTO.getDate()).isPresent()) {
             return Optional.empty();
         }
 

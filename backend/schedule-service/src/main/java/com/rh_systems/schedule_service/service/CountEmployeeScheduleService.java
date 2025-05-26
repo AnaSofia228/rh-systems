@@ -59,7 +59,7 @@ public class CountEmployeeScheduleService {
      * @return an Optional containing the CountEmployeeScheduleDTOGetPostPut if found, or empty otherwise
      */
     public Optional<CountEmployeeScheduleDTOGetPostPut> getCountEmployeeScheduleByWorkHours(Float workHours) {
-        Optional<CountEmployeeSchedule> countEmployeeSchedule = countEmployeeScheduleRepository.findByCountEmployeeSchedule(workHours);
+        Optional<CountEmployeeSchedule> countEmployeeSchedule = countEmployeeScheduleRepository.findByWorkHours(workHours);
         if (countEmployeeSchedule.isPresent()) {
             CountEmployeeScheduleDTOGetPostPut countEmployeeScheduleDTO = new CountEmployeeScheduleDTOGetPostPut();
             countEmployeeScheduleDTO.convertToCountEmployeeScheduleDTO(countEmployeeSchedule.get());
@@ -74,7 +74,7 @@ public class CountEmployeeScheduleService {
      * @return an Optional containing the created CountEmployeeScheduleDTOGetPostPut, or empty if a schedule with the same work hours exists
      */
     public Optional<CountEmployeeScheduleDTOGetPostPut> createCountEmployeeSchedule(CountEmployeeScheduleDTO countEmployeeScheduleDTO) {
-        if (countEmployeeScheduleRepository.findByCountEmployeeSchedule(countEmployeeScheduleDTO.getWorkHours()).isPresent()) {
+        if (countEmployeeScheduleRepository.findByWorkHours(countEmployeeScheduleDTO.getWorkHours()).isPresent()) {
             return Optional.empty();
         } 
         CountEmployeeSchedule countEmployeeSchedule = new CountEmployeeSchedule();
@@ -98,7 +98,7 @@ public class CountEmployeeScheduleService {
         Optional<CountEmployeeSchedule> countEmployeeSchedule = countEmployeeScheduleRepository.findById(id);
         if (countEmployeeSchedule.isPresent()) {
             if (!countEmployeeSchedule.get().getWorkHours().equals(countEmployeeScheduleDTO.getWorkHours())) {
-                if (countEmployeeScheduleRepository.findByCountEmployeeSchedule(countEmployeeScheduleDTO.getWorkHours()).isPresent()) {
+                if (countEmployeeScheduleRepository.findByWorkHours(countEmployeeScheduleDTO.getWorkHours()).isPresent()) {
                     return Optional.empty();
                 }
             }

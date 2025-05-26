@@ -30,10 +30,10 @@ public class ScheduleServiceTest {
 
     @Mock
     private ScheduleRepository scheduleRepository;
-    
+
     @Mock
     private EmployeeScheduleRepository employeeScheduleRepository;
-    
+
     @Mock
     private EmployeeClient employeeClient;
 
@@ -50,7 +50,7 @@ public class ScheduleServiceTest {
         dto.setTotalHours(8.0f);
         dto.setDeductedHours(1.0f);
         dto.setEmployeeIds(List.of(1L, 2L));
-        
+
         Schedule savedSchedule = new Schedule();
         savedSchedule.setId(1L);
         savedSchedule.setDate(dto.getDate());
@@ -58,8 +58,8 @@ public class ScheduleServiceTest {
         savedSchedule.setExitTime(dto.getExitTime());
         savedSchedule.setTotalHours(dto.getTotalHours());
         savedSchedule.setDeductedHours(dto.getDeductedHours());
-        
-        when(scheduleRepository.findByScheduleDate(any(LocalDate.class))).thenReturn(Optional.empty());
+
+        when(scheduleRepository.findByDate(any(LocalDate.class))).thenReturn(Optional.empty());
         when(scheduleRepository.save(any(Schedule.class))).thenReturn(savedSchedule);
         when(employeeClient.getEmployeeById(1L))
             .thenReturn(new EmployeeDTO(1L, "John", "Doe", "john.doe@example.com", "Developer"));

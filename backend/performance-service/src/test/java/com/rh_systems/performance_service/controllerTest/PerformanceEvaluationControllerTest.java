@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
+import java.util.Date;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -45,14 +46,16 @@ class PerformanceEvaluationControllerTest {
     void shouldCreateEvaluationViaApi() throws Exception {
         // Arrange
         PerformanceEvaluationDTO request = new PerformanceEvaluationDTO();
-        request.setScore(90);
+        request.setScore(5);
+        request.setDate(new Date());
+        request.setEmployeeId(1L);
 
         PerformanceEvaluationDTOGetPostPut response = new PerformanceEvaluationDTOGetPostPut();
         when(service.createPerformanceEvaluation(any(PerformanceEvaluationDTO.class)))
             .thenReturn(Optional.of(response));
 
         // Act & Assert
-        mockMvc.perform(post("/api/performance-evaluation")
+        mockMvc.perform(post("/evaluations")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(new ObjectMapper().writeValueAsString(request)))
                 .andExpect(status().isOk());
