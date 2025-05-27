@@ -3,6 +3,7 @@ export const environment = {
     // Configuración para desarrollo local
     local: {
         employeeApi: 'http://localhost:8005',
+        authApi: 'http://localhost:8005',
         payrollApi: 'http://localhost:8006',
         performanceApi: 'http://localhost:8007',
         scheduleApi: 'http://localhost:8008'
@@ -11,9 +12,10 @@ export const environment = {
     docker: {
         // Use NGINX as API gateway in production
         employeeApi: '/api/employee',
-        payrollApi: '/api/payrolls',
+        authApi: '/api/auth',
+        payrollApi: '/api/payroll',
         performanceApi: '/evaluations',
-        scheduleApi: '/api/schedules'
+        scheduleApi: '/api/schedule'
     }
 } as const;
 

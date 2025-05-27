@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       rollupOptions: {
-        external: ['jspdf', 'jspdf-autotable', 'jwt-decode']
+        external: []
       }
     },
     // Make env variables available to the app

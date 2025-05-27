@@ -1,11 +1,12 @@
 import axios from "axios";
 import { toast } from "@/components/ui/sonner";
 
-import { apiConfig } from "@/config/environment";
+import {apiConfig, environment} from "@/config/environment";
 
 // URLs por microservicio (obtenidas de la configuración de entorno)
 const BASE_URLS = {
   EMPLOYEE: apiConfig.employeeApi,
+  AUTH: apiConfig.authApi,
   PAYROLL: apiConfig.payrollApi,
   PERFORMANCE: apiConfig.performanceApi,
   SCHEDULE: apiConfig.scheduleApi,
@@ -115,7 +116,7 @@ interface JwtResponse {
 
 export const authApi = {
   login: (credentials: LoginCredentials) => 
-    api.post<JwtResponse>(`${BASE_URLS.EMPLOYEE}/api/auth/login`, credentials),
+    api.post<JwtResponse>(`${BASE_URLS.AUTH}/login`, credentials),
 };
 
 // Employee API 
