@@ -205,7 +205,7 @@ public class EmployeeControllerTest {
         employeeDTO.setName("John");
         employeeDTO.setLastName("Doe");
         employeeDTO.setEmail("john.doe@example.com");
-        employeeDTO.setDni("12345678A");
+        employeeDTO.setDni("123456789");
         employeeDTO.setPhone("123456789");
         employeeDTO.setAddress("123 Main St");
         employeeDTO.setPassword("password");

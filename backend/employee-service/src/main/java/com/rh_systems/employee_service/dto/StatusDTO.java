@@ -15,7 +15,6 @@ public class StatusDTO {
     private Date startDate;
 
     @NotNull(message = "An end date must be provided")
-    @PastOrPresent(message = "The end date must be in the past or present")
     private Date endDate;
 
     @NotNull(message = "A status paid must be provided")

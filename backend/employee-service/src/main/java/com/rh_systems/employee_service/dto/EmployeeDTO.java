@@ -9,7 +9,7 @@ public class EmployeeDTO {
 
     @NotBlank(message = "An employee ID must be provided")
     @Size(min = 1, max = 10, message = "The ID must be between 1 and 10 characters long")
-    @Pattern(regexp = "^[0-9]+$", message = "The DNI must contain only numeric characters")
+    @Pattern(regexp = "^[0-9A-Za-z]+$", message = "The DNI must contain only alphanumeric characters")
     private String dni;
 
     @NotBlank(message = "An employee name must be provided")
@@ -34,8 +34,7 @@ public class EmployeeDTO {
     private String phone;
 
     @NotBlank(message = "An employee password must be provided")
-    @Size(min = 8, max = 100, message = "The password must be between 8 and 100 characters long")
-    @Pattern(regexp = "^(?=.*\\d)(?=.*[@#$%^&+=!]).+$", message = "The password must contain at least one number and one special character")
+    @Size(min = 4, max = 100, message = "The password must be between 4 and 100 characters long")
     private String password;
 
 

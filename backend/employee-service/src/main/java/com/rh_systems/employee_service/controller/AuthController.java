@@ -3,6 +3,7 @@ package com.rh_systems.employee_service.controller;
 import com.rh_systems.employee_service.dto.EmployeeLoginDTO;
 import com.rh_systems.employee_service.dto.JwtResponse;
 import com.rh_systems.employee_service.security.JwtTokenProvider;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,18 +24,20 @@ public class AuthController {
     private JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateEmployee(@RequestBody EmployeeLoginDTO employeeLoginDTO){
+    public ResponseEntity<?> authenticateEmployee(@Valid @RequestBody EmployeeLoginDTO employeeLoginDTO){
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            employeeLoginDTO.getEmail(),
+                            employeeLoginDTO.getPassword()));
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        employeeLoginDTO.getEmail(),
-                        employeeLoginDTO.getPassword()));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtTokenProvider.generateToken(authentication);
 
-                String jwt = jwtTokenProvider.generateToken(authentication);
-
-        return ResponseEntity.ok(new JwtResponse(jwt, "","",employeeLoginDTO.getEmail()));
-
+            return ResponseEntity.ok(new JwtResponse(jwt, "","",employeeLoginDTO.getEmail()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Authentication failed: " + e.getMessage());
+        }
     }
 }

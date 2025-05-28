@@ -12,8 +12,6 @@ public class EmployeeLoginDTO {
     private String email;
 
     @NotBlank(message = "An employee password must be provided")
-    @Size(min = 8, max = 100, message = "The password must be between 8 and 100 characters long")
-    @Pattern(regexp = "^(?=.*\\d)(?=.*[@#$%^&+=!]).+$", message = "The password must contain at least one number and one special character")
     private String password;
 
     /**

@@ -11,7 +11,7 @@ public class EmployeeDTOGetPostPut {
     private String email;
     private String phone;
     private String address;
-    private String positionId;
+    private Long positionId;
 
     /**
      * Empty constructor
@@ -31,7 +31,7 @@ public class EmployeeDTOGetPostPut {
      * @param address     Employee address
      * @param positionId  Employee position ID
      */
-    public EmployeeDTOGetPostPut(Long id, String dni, String name, String lastName, String email, String phone, String address, String positionId) {
+    public EmployeeDTOGetPostPut(Long id, String dni, String name, String lastName, String email, String phone, String address, Long positionId) {
         this.id = id;
         this.dni = dni;
         this.name = name;
@@ -174,7 +174,7 @@ public class EmployeeDTOGetPostPut {
      *
      * @return Employee position ID
      */
-    public String getPositionId() {
+    public Long getPositionId() {
         return positionId;
     }
 
@@ -183,7 +183,7 @@ public class EmployeeDTOGetPostPut {
      *
      * @param positionId Employee position ID
      */
-    public void setPositionId(String positionId) {
+    public void setPositionId(Long positionId) {
         this.positionId = positionId;
     }
 
@@ -195,6 +195,6 @@ public class EmployeeDTOGetPostPut {
         this.setEmail(employee.getEmail());
         this.setPhone(employee.getPhone());
         this.setAddress(employee.getAddress());
-        this.setPositionId(employee.getPosition().getId().toString());
+        this.setPositionId(employee.getPosition().getId());
     }
 }

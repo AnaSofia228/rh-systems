@@ -26,7 +26,7 @@ services:
     ports:
       - "3000:80"
     environment:
-      - REACT_APP_API_URL=http://nginx-proxy:80 # Nginx actúa como API Gateway
+      - REACT_APP_API_URL=http://nginx-proxy # Nginx actúa como API Gateway
     depends_on:
       - employee-db
       - payroll-db

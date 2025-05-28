@@ -69,24 +69,28 @@ public class StatusService {
      */
     public Optional<StatusDTOGetPostPut> save(StatusDTO statusDTO) {
         Optional<Employee> employee = employeeRepository.findById(statusDTO.getEmployeeId());
-        Optional<StatusPermission> statusPermission = statusPermissionRepository.findById(statusDTO.getStatusPermissionId());
-        if (employee.isPresent() && statusPermission.isPresent()) {
-            Status status = new Status();
-            status.setType(statusDTO.getType());
-            status.setStartDate(statusDTO.getStartDate());
-            status.setEndDate(statusDTO.getEndDate());
-            status.setPaid(statusDTO.getPaid());
-            status.setDescription(statusDTO.getDescription());
-            status.setEmployee(employee.get());
-            status.setStatusPermission(statusPermission.get());
-
-            Status savedStatus = statusRepository.save(status);
-            StatusDTOGetPostPut dto = new StatusDTOGetPostPut();
-            dto.convertToStatus(savedStatus);
-            return Optional.of(dto);
+        if (!employee.isPresent()) {
+            return Optional.empty();
         }
 
-        return Optional.empty(); // Return empty if related entities are not found.
+        Optional<StatusPermission> statusPermission = statusPermissionRepository.findById(statusDTO.getStatusPermissionId());
+        if (!statusPermission.isPresent()) {
+            return Optional.empty();
+        }
+
+        Status status = new Status();
+        status.setType(statusDTO.getType());
+        status.setStartDate(statusDTO.getStartDate());
+        status.setEndDate(statusDTO.getEndDate());
+        status.setPaid(statusDTO.getPaid());
+        status.setDescription(statusDTO.getDescription());
+        status.setEmployee(employee.get());
+        status.setStatusPermission(statusPermission.get());
+
+        Status savedStatus = statusRepository.save(status);
+        StatusDTOGetPostPut dto = new StatusDTOGetPostPut();
+        dto.convertToStatus(savedStatus);
+        return Optional.of(dto);
     }
 
     /**
@@ -98,26 +102,33 @@ public class StatusService {
      */
     public Optional<StatusDTOGetPostPut> update(long id, StatusDTO statusDTO) {
         Optional<Status> existingStatus = statusRepository.findById(id);
-        Optional<Employee> employee = employeeRepository.findById(statusDTO.getEmployeeId());
-        Optional<StatusPermission> statusPermission = statusPermissionRepository.findById(statusDTO.getStatusPermissionId());
-
-        if (existingStatus.isPresent() && employee.isPresent() && statusPermission.isPresent()) {
-            Status statusToUpdate = existingStatus.get();
-            statusToUpdate.setType(statusDTO.getType());
-            statusToUpdate.setStartDate(statusDTO.getStartDate());
-            statusToUpdate.setEndDate(statusDTO.getEndDate());
-            statusToUpdate.setPaid(statusDTO.getPaid());
-            statusToUpdate.setDescription(statusDTO.getDescription());
-            statusToUpdate.setEmployee(employee.get());
-            statusToUpdate.setStatusPermission(statusPermission.get());
-
-            Status updatedStatus = statusRepository.save(statusToUpdate);
-            StatusDTOGetPostPut dto = new StatusDTOGetPostPut();
-            dto.convertToStatus(updatedStatus);
-            return Optional.of(dto);
+        if (!existingStatus.isPresent()) {
+            return Optional.empty();
         }
 
-        return Optional.empty(); // Return empty if the status or related entities do not exist.
+        Optional<Employee> employee = employeeRepository.findById(statusDTO.getEmployeeId());
+        if (!employee.isPresent()) {
+            return Optional.empty();
+        }
+
+        Optional<StatusPermission> statusPermission = statusPermissionRepository.findById(statusDTO.getStatusPermissionId());
+        if (!statusPermission.isPresent()) {
+            return Optional.empty();
+        }
+
+        Status statusToUpdate = existingStatus.get();
+        statusToUpdate.setType(statusDTO.getType());
+        statusToUpdate.setStartDate(statusDTO.getStartDate());
+        statusToUpdate.setEndDate(statusDTO.getEndDate());
+        statusToUpdate.setPaid(statusDTO.getPaid());
+        statusToUpdate.setDescription(statusDTO.getDescription());
+        statusToUpdate.setEmployee(employee.get());
+        statusToUpdate.setStatusPermission(statusPermission.get());
+
+        Status updatedStatus = statusRepository.save(statusToUpdate);
+        StatusDTOGetPostPut dto = new StatusDTOGetPostPut();
+        dto.convertToStatus(updatedStatus);
+        return Optional.of(dto);
     }
 
     /**
