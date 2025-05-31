@@ -166,6 +166,38 @@ public class EmployeeControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
+    void testFindByPhone_Success() throws Exception {
+        // Arrange
+        String phone = "123456789";
+        EmployeeDTOGetPostPut employee = new EmployeeDTOGetPostPut();
+        employee.setId(1L);
+        employee.setName("John");
+        employee.setLastName("Doe");
+        employee.setEmail("john.doe@example.com");
+        employee.setPhone(phone);
+
+        when(employeeService.findByPhone(phone)).thenReturn(Optional.of(employee));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/employee/phone/{phone}", phone))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testFindByPhone_NotFound() throws Exception {
+        // Arrange
+        String phone = "123456789";
+        when(employeeService.findByPhone(phone)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        mockMvc.perform(get("/api/employee/phone/{phone}", phone))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     void testSave_Success() throws Exception {
         // Arrange
         EmployeeDTO employeeDTO = new EmployeeDTO();
@@ -280,6 +312,180 @@ public class EmployeeControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
+    void testUpdateByDni_Success() throws Exception {
+        // Arrange
+        String dni = "12345678A";
+        EmployeeDTO employeeDTO = new EmployeeDTO();
+        employeeDTO.setName("John");
+        employeeDTO.setLastName("Doe");
+        employeeDTO.setEmail("john.doe@example.com");
+        employeeDTO.setDni("12345678A");
+        employeeDTO.setPhone("123456789");
+        employeeDTO.setAddress("123 Main St");
+        employeeDTO.setPassword("password");
+        employeeDTO.setPositionId(1L);
+
+        EmployeeDTOGetPostPut updatedEmployee = new EmployeeDTOGetPostPut();
+        updatedEmployee.setId(1L);
+        updatedEmployee.setName("John");
+        updatedEmployee.setLastName("Doe");
+        updatedEmployee.setEmail("john.doe@example.com");
+        updatedEmployee.setDni("12345678A");
+        updatedEmployee.setPhone("123456789");
+        updatedEmployee.setAddress("123 Main St");
+
+        when(employeeService.updateByDni(anyString(), any(EmployeeDTO.class))).thenReturn(Optional.of(updatedEmployee));
+
+        // Act & Assert
+        mockMvc.perform(put("/api/employee/dni/{dni}", dni)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(employeeDTO)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testUpdateByDni_NotFound() throws Exception {
+        // Arrange
+        String dni = "12345678A";
+        EmployeeDTO employeeDTO = new EmployeeDTO();
+        employeeDTO.setName("John");
+        employeeDTO.setLastName("Doe");
+        employeeDTO.setEmail("john.doe@example.com");
+        employeeDTO.setDni("12345678A");
+        employeeDTO.setPhone("123456789");
+        employeeDTO.setAddress("123 Main St");
+        employeeDTO.setPassword("password");
+        employeeDTO.setPositionId(1L);
+
+        when(employeeService.updateByDni(anyString(), any(EmployeeDTO.class))).thenReturn(Optional.empty());
+
+        // Act & Assert
+        mockMvc.perform(put("/api/employee/dni/{dni}", dni)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(employeeDTO)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testUpdateByEmail_Success() throws Exception {
+        // Arrange
+        String email = "john.doe@example.com";
+        EmployeeDTO employeeDTO = new EmployeeDTO();
+        employeeDTO.setName("John");
+        employeeDTO.setLastName("Doe");
+        employeeDTO.setEmail("john.doe@example.com");
+        employeeDTO.setDni("12345678A");
+        employeeDTO.setPhone("123456789");
+        employeeDTO.setAddress("123 Main St");
+        employeeDTO.setPassword("password");
+        employeeDTO.setPositionId(1L);
+
+        EmployeeDTOGetPostPut updatedEmployee = new EmployeeDTOGetPostPut();
+        updatedEmployee.setId(1L);
+        updatedEmployee.setName("John");
+        updatedEmployee.setLastName("Doe");
+        updatedEmployee.setEmail("john.doe@example.com");
+        updatedEmployee.setDni("12345678A");
+        updatedEmployee.setPhone("123456789");
+        updatedEmployee.setAddress("123 Main St");
+
+        when(employeeService.updateByEmail(anyString(), any(EmployeeDTO.class))).thenReturn(Optional.of(updatedEmployee));
+
+        // Act & Assert
+        mockMvc.perform(put("/api/employee/email/{email}", email)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(employeeDTO)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testUpdateByEmail_NotFound() throws Exception {
+        // Arrange
+        String email = "john.doe@example.com";
+        EmployeeDTO employeeDTO = new EmployeeDTO();
+        employeeDTO.setName("John");
+        employeeDTO.setLastName("Doe");
+        employeeDTO.setEmail("john.doe@example.com");
+        employeeDTO.setDni("12345678A");
+        employeeDTO.setPhone("123456789");
+        employeeDTO.setAddress("123 Main St");
+        employeeDTO.setPassword("password");
+        employeeDTO.setPositionId(1L);
+
+        when(employeeService.updateByEmail(anyString(), any(EmployeeDTO.class))).thenReturn(Optional.empty());
+
+        // Act & Assert
+        mockMvc.perform(put("/api/employee/email/{email}", email)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(employeeDTO)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testUpdateByPhone_Success() throws Exception {
+        // Arrange
+        String phone = "123456789";
+        EmployeeDTO employeeDTO = new EmployeeDTO();
+        employeeDTO.setName("John");
+        employeeDTO.setLastName("Doe");
+        employeeDTO.setEmail("john.doe@example.com");
+        employeeDTO.setDni("12345678A");
+        employeeDTO.setPhone("123456789");
+        employeeDTO.setAddress("123 Main St");
+        employeeDTO.setPassword("password");
+        employeeDTO.setPositionId(1L);
+
+        EmployeeDTOGetPostPut updatedEmployee = new EmployeeDTOGetPostPut();
+        updatedEmployee.setId(1L);
+        updatedEmployee.setName("John");
+        updatedEmployee.setLastName("Doe");
+        updatedEmployee.setEmail("john.doe@example.com");
+        updatedEmployee.setDni("12345678A");
+        updatedEmployee.setPhone("123456789");
+        updatedEmployee.setAddress("123 Main St");
+
+        when(employeeService.updateByPhone(anyString(), any(EmployeeDTO.class))).thenReturn(Optional.of(updatedEmployee));
+
+        // Act & Assert
+        mockMvc.perform(put("/api/employee/phone/{phone}", phone)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(employeeDTO)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testUpdateByPhone_NotFound() throws Exception {
+        // Arrange
+        String phone = "123456789";
+        EmployeeDTO employeeDTO = new EmployeeDTO();
+        employeeDTO.setName("John");
+        employeeDTO.setLastName("Doe");
+        employeeDTO.setEmail("john.doe@example.com");
+        employeeDTO.setDni("12345678A");
+        employeeDTO.setPhone("123456789");
+        employeeDTO.setAddress("123 Main St");
+        employeeDTO.setPassword("password");
+        employeeDTO.setPositionId(1L);
+
+        when(employeeService.updateByPhone(anyString(), any(EmployeeDTO.class))).thenReturn(Optional.empty());
+
+        // Act & Assert
+        mockMvc.perform(put("/api/employee/phone/{phone}", phone)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(employeeDTO)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteById_Success() throws Exception {
         // Arrange
         Long employeeId = 1L;
@@ -299,6 +505,30 @@ public class EmployeeControllerTest {
 
         // Act & Assert
         mockMvc.perform(delete("/api/employee/{id}", employeeId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testDeleteByDni_Success() throws Exception {
+        // Arrange
+        String dni = "12345678A";
+        when(employeeService.deleteByDni(dni)).thenReturn(true);
+
+        // Act & Assert
+        mockMvc.perform(delete("/api/employee/dni/{dni}", dni))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testDeleteByDni_NotFound() throws Exception {
+        // Arrange
+        String dni = "12345678A";
+        when(employeeService.deleteByDni(dni)).thenReturn(false);
+
+        // Act & Assert
+        mockMvc.perform(delete("/api/employee/dni/{dni}", dni))
                 .andExpect(status().isNotFound());
     }
 }

@@ -25,6 +25,7 @@ import com.rh_systems.payroll_service.Entity.PayrollAdjustments.AdjustmentType;
 import com.rh_systems.payroll_service.dto.PayrollAdjustmentsDTO;
 import com.rh_systems.payroll_service.dto.PayrollAdjustmentsDTOGetPostPut;
 import com.rh_systems.payroll_service.repository.PayrollAdjustmentsRepository;
+import com.rh_systems.payroll_service.repository.PayrollRepository;
 import com.rh_systems.payroll_service.service.PayrollAdjustmentsService;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,6 +33,9 @@ public class PayrollAdjustmentsServiceTest {
 
     @Mock
     private PayrollAdjustmentsRepository payrollAdjustmentsRepository;
+
+    @Mock
+    private PayrollRepository payrollRepository;
 
     @InjectMocks
     private PayrollAdjustmentsService payrollAdjustmentsService;
@@ -110,7 +114,7 @@ public class PayrollAdjustmentsServiceTest {
     @Test
     void testGetPayrollAdjustmentsByType_Found() {
         // Arrange
-        when(payrollAdjustmentsRepository.findByPayrollAdjustmentsType(anyString())).thenReturn(Optional.of(adjustment));
+        when(payrollAdjustmentsRepository.findByType(any(AdjustmentType.class))).thenReturn(Optional.of(adjustment));
 
         // Act
         Optional<PayrollAdjustmentsDTOGetPostPut> result = payrollAdjustmentsService.getPayrollAdjustmentsByType("BONUS");
@@ -126,7 +130,7 @@ public class PayrollAdjustmentsServiceTest {
     @Test
     void testGetPayrollAdjustmentsByType_NotFound() {
         // Arrange
-        when(payrollAdjustmentsRepository.findByPayrollAdjustmentsType(anyString())).thenReturn(Optional.empty());
+        when(payrollAdjustmentsRepository.findByType(any(AdjustmentType.class))).thenReturn(Optional.empty());
 
         // Act
         Optional<PayrollAdjustmentsDTOGetPostPut> result = payrollAdjustmentsService.getPayrollAdjustmentsByType("BONUS");
@@ -138,7 +142,9 @@ public class PayrollAdjustmentsServiceTest {
     @Test
     void testCreatePayrollAdjustments_Success() {
         // Arrange
-        when(payrollAdjustmentsRepository.findByPayrollAdjustmentsType(anyString())).thenReturn(Optional.empty());
+        when(payrollAdjustmentsRepository.findByType(any(AdjustmentType.class))).thenReturn(Optional.empty());
+        when(payrollRepository.findById(anyLong())).thenReturn(Optional.of(payroll));
+        when(payrollRepository.save(any(Payroll.class))).thenReturn(payroll);
         when(payrollAdjustmentsRepository.save(any(PayrollAdjustments.class))).thenReturn(adjustment);
 
         // Act
@@ -155,7 +161,7 @@ public class PayrollAdjustmentsServiceTest {
     @Test
     void testCreatePayrollAdjustments_TypeConflict() {
         // Arrange
-        when(payrollAdjustmentsRepository.findByPayrollAdjustmentsType(anyString())).thenReturn(Optional.of(adjustment));
+        when(payrollAdjustmentsRepository.findByType(any(AdjustmentType.class))).thenReturn(Optional.of(adjustment));
 
         // Act
         Optional<PayrollAdjustmentsDTOGetPostPut> result = payrollAdjustmentsService.createPayrollAdjustments(adjustmentDTO);
@@ -168,6 +174,8 @@ public class PayrollAdjustmentsServiceTest {
     void testUpdatePayrollAdjustment_Success() {
         // Arrange
         when(payrollAdjustmentsRepository.findById(anyLong())).thenReturn(Optional.of(adjustment));
+        when(payrollRepository.findById(anyLong())).thenReturn(Optional.of(payroll));
+        when(payrollRepository.save(any(Payroll.class))).thenReturn(payroll);
         when(payrollAdjustmentsRepository.save(any(PayrollAdjustments.class))).thenReturn(adjustment);
 
         // Act
@@ -199,13 +207,14 @@ public class PayrollAdjustmentsServiceTest {
         PayrollAdjustments existingAdjustment = new PayrollAdjustments();
         existingAdjustment.setId(1L);
         existingAdjustment.setType(AdjustmentType.DISCOUNT);
+        existingAdjustment.setPayroll(payroll);
 
         PayrollAdjustments conflictAdjustment = new PayrollAdjustments();
         conflictAdjustment.setId(2L);
         conflictAdjustment.setType(AdjustmentType.BONUS);
 
         when(payrollAdjustmentsRepository.findById(anyLong())).thenReturn(Optional.of(existingAdjustment));
-        when(payrollAdjustmentsRepository.findByPayrollAdjustmentsType(anyString())).thenReturn(Optional.of(conflictAdjustment));
+        when(payrollAdjustmentsRepository.findByType(any(AdjustmentType.class))).thenReturn(Optional.of(conflictAdjustment));
 
         // Act
         Optional<PayrollAdjustmentsDTOGetPostPut> result = payrollAdjustmentsService.updatePayrollAdjustment(1L, adjustmentDTO);
@@ -218,6 +227,7 @@ public class PayrollAdjustmentsServiceTest {
     void testDeletePayrollAdjustment_Success() {
         // Arrange
         when(payrollAdjustmentsRepository.findById(anyLong())).thenReturn(Optional.of(adjustment));
+        when(payrollRepository.save(any(Payroll.class))).thenReturn(payroll);
 
         // Act
         boolean result = payrollAdjustmentsService.deletePayrollAdjustment(1L);

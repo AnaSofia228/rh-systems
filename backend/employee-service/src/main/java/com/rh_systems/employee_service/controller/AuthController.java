@@ -25,19 +25,15 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateEmployee(@Valid @RequestBody EmployeeLoginDTO employeeLoginDTO){
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            employeeLoginDTO.getEmail(),
-                            employeeLoginDTO.getPassword()));
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        employeeLoginDTO.getEmail(),
+                        employeeLoginDTO.getPassword()));
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            String jwt = jwtTokenProvider.generateToken(authentication);
+        String jwt = jwtTokenProvider.generateToken(authentication);
 
-            return ResponseEntity.ok(new JwtResponse(jwt, "","",employeeLoginDTO.getEmail()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Authentication failed: " + e.getMessage());
-        }
+        return ResponseEntity.ok(new JwtResponse(jwt, "","",employeeLoginDTO.getEmail()));
     }
 }

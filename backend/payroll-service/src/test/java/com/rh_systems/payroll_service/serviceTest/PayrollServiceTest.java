@@ -3,6 +3,7 @@ package com.rh_systems.payroll_service.serviceTest;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -25,6 +26,7 @@ import com.rh_systems.payroll_service.client.EmployeeClient;
 import com.rh_systems.payroll_service.dto.EmployeeDTO;
 import com.rh_systems.payroll_service.dto.PayrollDTO;
 import com.rh_systems.payroll_service.dto.PayrollDTOGetPostPut;
+import com.rh_systems.payroll_service.dto.PositionDTO;
 import com.rh_systems.payroll_service.repository.PayrollRepository;
 import com.rh_systems.payroll_service.service.PayrollService;
 
@@ -43,6 +45,7 @@ public class PayrollServiceTest {
     private PayrollDTO payrollDTO;
     private Payroll payroll;
     private EmployeeDTO employeeDTO;
+    private PositionDTO positionDTO;
 
     @BeforeEach
     void setUp() {
@@ -65,12 +68,19 @@ public class PayrollServiceTest {
         employeeDTO.setName("John");
         employeeDTO.setLastName("Doe");
         employeeDTO.setEmail("john.doe@example.com");
+        employeeDTO.setPosition("Developer");
+
+        positionDTO = new PositionDTO();
+        positionDTO.setId(1L);
+        positionDTO.setName("Developer");
+        positionDTO.setBaseSalary(1000.0f);
     }
 
     @Test
     void testCreatePayrollWithEmployeeValidation_Success() {
         // Arrange
         when(employeeClient.getEmployeeById(anyLong())).thenReturn(employeeDTO);
+        when(employeeClient.getPositionByName(anyString())).thenReturn(positionDTO);
         when(payrollRepository.findByStatus(anyString())).thenReturn(Optional.empty());
         when(payrollRepository.save(any(Payroll.class))).thenReturn(payroll);
 
@@ -97,9 +107,23 @@ public class PayrollServiceTest {
     }
 
     @Test
+    void testCreatePayrollWithEmployeeValidation_PositionNotFound() {
+        // Arrange
+        when(employeeClient.getEmployeeById(anyLong())).thenReturn(employeeDTO);
+        when(employeeClient.getPositionByName(anyString())).thenReturn(null);
+
+        // Act
+        Optional<PayrollDTOGetPostPut> result = payrollService.createPayrollWithEmployeeValidation(payrollDTO);
+
+        // Assert
+        assertFalse(result.isPresent());
+    }
+
+    @Test
     void testCreatePayrollWithEmployeeValidation_StatusConflict() {
         // Arrange
         when(employeeClient.getEmployeeById(anyLong())).thenReturn(employeeDTO);
+        when(employeeClient.getPositionByName(anyString())).thenReturn(positionDTO);
         when(payrollRepository.findByStatus(anyString())).thenReturn(Optional.of(payroll));
 
         // Act
@@ -180,6 +204,8 @@ public class PayrollServiceTest {
     @Test
     void testCreatePayroll_Success() {
         // Arrange
+        when(employeeClient.getEmployeeById(anyLong())).thenReturn(employeeDTO);
+        when(employeeClient.getPositionByName(anyString())).thenReturn(positionDTO);
         when(payrollRepository.findByStatus(anyString())).thenReturn(Optional.empty());
         when(payrollRepository.save(any(Payroll.class))).thenReturn(payroll);
 
@@ -205,9 +231,38 @@ public class PayrollServiceTest {
     }
 
     @Test
+    void testCreatePayroll_EmployeeNotFound() {
+        // Arrange
+        when(payrollRepository.findByStatus(anyString())).thenReturn(Optional.empty());
+        when(employeeClient.getEmployeeById(anyLong())).thenReturn(null);
+
+        // Act
+        Optional<PayrollDTOGetPostPut> result = payrollService.createPayroll(payrollDTO);
+
+        // Assert
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    void testCreatePayroll_PositionNotFound() {
+        // Arrange
+        when(payrollRepository.findByStatus(anyString())).thenReturn(Optional.empty());
+        when(employeeClient.getEmployeeById(anyLong())).thenReturn(employeeDTO);
+        when(employeeClient.getPositionByName(anyString())).thenReturn(null);
+
+        // Act
+        Optional<PayrollDTOGetPostPut> result = payrollService.createPayroll(payrollDTO);
+
+        // Assert
+        assertFalse(result.isPresent());
+    }
+
+    @Test
     void testUpdatePayroll_Success() {
         // Arrange
         when(payrollRepository.findById(anyLong())).thenReturn(Optional.of(payroll));
+        when(employeeClient.getEmployeeById(anyLong())).thenReturn(employeeDTO);
+        when(employeeClient.getPositionByName(anyString())).thenReturn(positionDTO);
         when(payrollRepository.save(any(Payroll.class))).thenReturn(payroll);
 
         // Act
@@ -244,6 +299,33 @@ public class PayrollServiceTest {
 
         when(payrollRepository.findById(anyLong())).thenReturn(Optional.of(existingPayroll));
         when(payrollRepository.findByStatus(anyString())).thenReturn(Optional.of(conflictPayroll));
+
+        // Act
+        Optional<PayrollDTOGetPostPut> result = payrollService.updatePayroll(1L, payrollDTO);
+
+        // Assert
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    void testUpdatePayroll_EmployeeNotFound() {
+        // Arrange
+        when(payrollRepository.findById(anyLong())).thenReturn(Optional.of(payroll));
+        when(employeeClient.getEmployeeById(anyLong())).thenReturn(null);
+
+        // Act
+        Optional<PayrollDTOGetPostPut> result = payrollService.updatePayroll(1L, payrollDTO);
+
+        // Assert
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    void testUpdatePayroll_PositionNotFound() {
+        // Arrange
+        when(payrollRepository.findById(anyLong())).thenReturn(Optional.of(payroll));
+        when(employeeClient.getEmployeeById(anyLong())).thenReturn(employeeDTO);
+        when(employeeClient.getPositionByName(anyString())).thenReturn(null);
 
         // Act
         Optional<PayrollDTOGetPostPut> result = payrollService.updatePayroll(1L, payrollDTO);

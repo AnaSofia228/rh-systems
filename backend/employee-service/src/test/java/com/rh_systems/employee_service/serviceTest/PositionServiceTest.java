@@ -166,11 +166,18 @@ public class PositionServiceTest {
     void testUpdate_Success() {
         // Arrange
         when(positionRepository.findById(anyLong())).thenReturn(Optional.of(position));
-        when(positionRepository.findByName(anyString())).thenReturn(Optional.empty());
         when(positionRepository.save(any(Position.class))).thenReturn(position);
 
+        // Create a DTO with a different name to test the duplicate check
+        PositionDTO updateDTO = new PositionDTO();
+        updateDTO.setName("Updated Manager");
+        updateDTO.setDescription("Updated Description");
+
+        // Mock the check for duplicate name
+        when(positionRepository.findByName("Updated Manager")).thenReturn(Optional.empty());
+
         // Act
-        Optional<PositionDTOGetPostPut> result = positionService.update(1L, positionDTO);
+        Optional<PositionDTOGetPostPut> result = positionService.update(1L, updateDTO);
 
         // Assert
         assertTrue(result.isPresent());
@@ -178,6 +185,7 @@ public class PositionServiceTest {
         assertEquals(position.getName(), result.get().getName());
         assertEquals(position.getDescription(), result.get().getDescription());
         verify(positionRepository, times(1)).findById(1L);
+        verify(positionRepository, times(1)).findByName("Updated Manager");
         verify(positionRepository, times(1)).save(any(Position.class));
     }
 
@@ -228,7 +236,8 @@ public class PositionServiceTest {
     @Test
     void testUpdateByName_Success() {
         // Arrange
-        when(positionRepository.findByName(anyString())).thenReturn(Optional.of(position));
+        when(positionRepository.findByName("Manager")).thenReturn(Optional.of(position));
+        when(positionRepository.findByName("Updated Manager")).thenReturn(Optional.empty());
         when(positionRepository.save(any(Position.class))).thenReturn(position);
 
         PositionDTO updateDTO = new PositionDTO();
@@ -241,6 +250,7 @@ public class PositionServiceTest {
         // Assert
         assertTrue(result.isPresent());
         verify(positionRepository, times(1)).findByName("Manager");
+        verify(positionRepository, times(1)).findByName("Updated Manager");
         verify(positionRepository, times(1)).save(any(Position.class));
     }
 

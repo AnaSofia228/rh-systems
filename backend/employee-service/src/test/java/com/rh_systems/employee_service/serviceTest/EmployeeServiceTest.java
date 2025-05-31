@@ -357,6 +357,33 @@ public class EmployeeServiceTest {
     }
 
     @Test
+    void testUpdateByDni_EmployeeNotFound() {
+        // Arrange
+        when(employeeRepository.findByDni(anyString())).thenReturn(Optional.empty());
+
+        // Act
+        Optional<EmployeeDTOGetPostPut> result = employeeService.updateByDni("12345678A", employeeDTO);
+
+        // Assert
+        assertFalse(result.isPresent());
+        verify(employeeRepository, times(0)).save(any(Employee.class));
+    }
+
+    @Test
+    void testUpdateByDni_PositionNotFound() {
+        // Arrange
+        when(employeeRepository.findByDni(anyString())).thenReturn(Optional.of(employee));
+        when(positionRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        // Act
+        Optional<EmployeeDTOGetPostPut> result = employeeService.updateByDni("12345678A", employeeDTO);
+
+        // Assert
+        assertFalse(result.isPresent());
+        verify(employeeRepository, times(0)).save(any(Employee.class));
+    }
+
+    @Test
     void testUpdateByEmail_Success() {
         // Arrange
         when(employeeRepository.findByEmail(anyString())).thenReturn(Optional.of(employee));
@@ -377,6 +404,33 @@ public class EmployeeServiceTest {
     }
 
     @Test
+    void testUpdateByEmail_EmployeeNotFound() {
+        // Arrange
+        when(employeeRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+
+        // Act
+        Optional<EmployeeDTOGetPostPut> result = employeeService.updateByEmail("john.doe@example.com", employeeDTO);
+
+        // Assert
+        assertFalse(result.isPresent());
+        verify(employeeRepository, times(0)).save(any(Employee.class));
+    }
+
+    @Test
+    void testUpdateByEmail_PositionNotFound() {
+        // Arrange
+        when(employeeRepository.findByEmail(anyString())).thenReturn(Optional.of(employee));
+        when(positionRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        // Act
+        Optional<EmployeeDTOGetPostPut> result = employeeService.updateByEmail("john.doe@example.com", employeeDTO);
+
+        // Assert
+        assertFalse(result.isPresent());
+        verify(employeeRepository, times(0)).save(any(Employee.class));
+    }
+
+    @Test
     void testUpdateByPhone_Success() {
         // Arrange
         when(employeeRepository.findByPhone(anyString())).thenReturn(Optional.of(employee));
@@ -394,5 +448,32 @@ public class EmployeeServiceTest {
         assertEquals(employee.getLastName(), result.get().getLastName());
         assertEquals(employee.getEmail(), result.get().getEmail());
         verify(passwordEncoder, times(1)).encode(anyString());
+    }
+
+    @Test
+    void testUpdateByPhone_EmployeeNotFound() {
+        // Arrange
+        when(employeeRepository.findByPhone(anyString())).thenReturn(Optional.empty());
+
+        // Act
+        Optional<EmployeeDTOGetPostPut> result = employeeService.updateByPhone("123456789", employeeDTO);
+
+        // Assert
+        assertFalse(result.isPresent());
+        verify(employeeRepository, times(0)).save(any(Employee.class));
+    }
+
+    @Test
+    void testUpdateByPhone_PositionNotFound() {
+        // Arrange
+        when(employeeRepository.findByPhone(anyString())).thenReturn(Optional.of(employee));
+        when(positionRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        // Act
+        Optional<EmployeeDTOGetPostPut> result = employeeService.updateByPhone("123456789", employeeDTO);
+
+        // Assert
+        assertFalse(result.isPresent());
+        verify(employeeRepository, times(0)).save(any(Employee.class));
     }
 }

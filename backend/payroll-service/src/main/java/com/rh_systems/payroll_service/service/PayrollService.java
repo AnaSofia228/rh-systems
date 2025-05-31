@@ -34,13 +34,17 @@ public class PayrollService {
         PositionDTO position;
         try {
             employee = employeeClient.getEmployeeById(payrollDTO.getEmployeeId());
+            if (employee == null) {
+                return Optional.empty();
+            }
             position = employeeClient.getPositionByName(employee.getPosition());
+            if (position == null) {
+                return Optional.empty();
+            }
         } catch (Exception e) {
             throw new RuntimeException("Error getting employee or position data: " + e.getMessage());
         }
-        if (employee == null || position == null) {
-            return Optional.empty();
-        }
+
         if (payrollRepository.findByStatus(payrollDTO.getStatus()).isPresent()) {
             return Optional.empty();
         }
@@ -119,12 +123,15 @@ public class PayrollService {
         PositionDTO position;
         try {
             employee = employeeClient.getEmployeeById(payrollDTO.getEmployeeId());
+            if (employee == null) {
+                return Optional.empty();
+            }
             position = employeeClient.getPositionByName(employee.getPosition());
+            if (position == null) {
+                return Optional.empty();
+            }
         } catch (Exception e) {
             throw new RuntimeException("Error getting employee or position data: " + e.getMessage());
-        }
-        if (employee == null || position == null) {
-            return Optional.empty();
         }
 
         Payroll payroll = new Payroll();
@@ -159,12 +166,15 @@ public class PayrollService {
             PositionDTO position;
             try {
                 employee = employeeClient.getEmployeeById(payrollDTO.getEmployeeId());
+                if (employee == null) {
+                    return Optional.empty();
+                }
                 position = employeeClient.getPositionByName(employee.getPosition());
+                if (position == null) {
+                    return Optional.empty();
+                }
             } catch (Exception e) {
                 throw new RuntimeException("Error getting employee or position data: " + e.getMessage());
-            }
-            if (employee == null || position == null) {
-                return Optional.empty();
             }
 
             Payroll payrollToUpdate = payroll.get();
